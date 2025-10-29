@@ -1,0 +1,330 @@
+@startuml Package Structure
+
+skinparam backgroundColor #FEFEFE
+skinparam packageStyle folder
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+title Package Structure - Library Management System
+
+' Root package
+package "pt.psoft.g1.psoftg1" {
+
+    ' Domain packages
+    package "authormanagement" as author_pkg {
+        package "api" as author_api {
+            class AuthorController
+            class AuthorView
+            class CreateAuthorRequest
+            class UpdateAuthorRequest
+            class AuthorLendingsView
+        }
+        package "services" as author_svc {
+            interface AuthorService
+            class AuthorServiceImpl
+        }
+        package "repositories" as author_repo {
+            interface AuthorRepository
+            class AuthorRepositoryImpl
+        }
+        package "model" as author_model {
+            class Author
+            class Bio
+        }
+    }
+
+    package "bookmanagement" as book_pkg {
+        package "api" as book_api {
+            class BookController
+            class BookView
+            class CreateBookRequest
+            class UpdateBookRequest
+        }
+        package "services" as book_svc {
+            interface BookService
+            class BookServiceImpl
+            class GenreBookCountDTO
+        }
+        package "repositories" as book_repo {
+            interface BookRepository
+            class BookRepositoryImpl
+        }
+        package "model" as book_model {
+            class Book
+            class Isbn
+            class Title
+        }
+    }
+
+    package "readermanagement" as reader_pkg {
+        package "api" as reader_api {
+            class ReaderController
+            class ReaderView
+            class CreateReaderRequest
+            class UpdateReaderRequest
+        }
+        package "services" as reader_svc {
+            interface ReaderService
+            class ReaderServiceImpl
+        }
+        package "repositories" as reader_repo {
+            interface ReaderRepository
+            class ReaderRepositoryImpl
+        }
+        package "model" as reader_model {
+            class ReaderDetails
+        }
+    }
+
+    package "lendingmanagement" as lending_pkg {
+        package "api" as lending_api {
+            class LendingController
+            class LendingView
+            class CreateLendingRequest
+        }
+        package "services" as lending_svc {
+            interface LendingService
+            class LendingServiceImpl
+        }
+        package "repositories" as lending_repo {
+            interface LendingRepository
+            class LendingRepositoryImpl
+        }
+        package "model" as lending_model {
+            class Lending
+            class Fine
+        }
+    }
+
+    package "genremanagement" as genre_pkg {
+        package "api" as genre_api {
+            class GenreController
+            class GenreView
+        }
+        package "services" as genre_svc {
+            interface GenreService
+            class GenreServiceImpl
+            class GenreLendingsDTO
+            class GenreLendingsPerMonthDTO
+        }
+        package "repositories" as genre_repo {
+            interface GenreRepository
+            class GenreRepositoryImpl
+        }
+        package "model" as genre_model {
+            class Genre
+        }
+    }
+
+    package "usermanagement" as user_pkg {
+        package "api" as user_api {
+            class UserController
+            class AuthRequest
+            class AuthResponse
+        }
+        package "services" as user_svc {
+            class UserService
+        }
+        package "repositories" as user_repo {
+            interface UserRepository
+            class UserRepositoryImpl
+        }
+        package "model" as user_model {
+            class User
+            enum Role
+        }
+    }
+
+    ' Cross-cutting packages
+    package "configuration" as config_pkg {
+        class SecurityConfig
+        class OpenApiConfig
+        class PersoftConfiguration
+    }
+
+    package "filemanagement" as file_pkg {
+        class FileStorageService
+        class FileStorageProperties
+        class UploadFileResponse
+    }
+
+    package "exceptions" as exc_pkg {
+        class NotFoundException
+        class ConflictException
+        class ErrorMessage
+    }
+
+    package "shared" as shared_pkg {
+        package "services" as shared_svc {
+            class Page
+            class EntityNotFoundException
+        }
+        package "model" as shared_model {
+            interface VersionedEntity
+        }
+    }
+
+    ' Main application class
+    class Psoftg1Application {
+        +main(args)
+    }
+}
+
+' Package dependencies
+author_api ..> author_svc : uses
+author_svc ..> author_repo : uses
+author_svc ..> author_model : uses
+author_repo ..> author_model : uses
+
+book_api ..> book_svc : uses
+book_svc ..> book_repo : uses
+book_svc ..> book_model : uses
+book_repo ..> book_model : uses
+
+reader_api ..> reader_svc : uses
+reader_svc ..> reader_repo : uses
+reader_svc ..> reader_model : uses
+reader_repo ..> reader_model : uses
+
+lending_api ..> lending_svc : uses
+lending_svc ..> lending_repo : uses
+lending_svc ..> lending_model : uses
+lending_repo ..> lending_model : uses
+
+genre_api ..> genre_svc : uses
+genre_svc ..> genre_repo : uses
+genre_svc ..> genre_model : uses
+genre_repo ..> genre_model : uses
+
+user_api ..> user_svc : uses
+user_svc ..> user_repo : uses
+user_svc ..> user_model : uses
+user_repo ..> user_model : uses
+
+' Cross-domain dependencies
+lending_model ..> book_model : uses
+lending_model ..> reader_model : uses
+book_model ..> genre_model : uses
+book_model ..> author_model : uses
+lending_svc ..> book_svc : coordinates
+lending_svc ..> reader_svc : coordinates
+
+' Cross-cutting dependencies
+author_api ..> exc_pkg : throws
+book_api ..> exc_pkg : throws
+reader_api ..> exc_pkg : throws
+lending_api ..> exc_pkg : throws
+
+author_svc ..> file_pkg : uses
+book_svc ..> file_pkg : uses
+
+author_svc ..> shared_svc : uses
+book_svc ..> shared_svc : uses
+reader_svc ..> shared_svc : uses
+lending_svc ..> shared_svc : uses
+genre_svc ..> shared_svc : uses
+
+note top of author_pkg
+  <b>Domain Module: Author Management</b>
+
+  <b>Responsibilities:</b>
+  • Manage author information
+  • Handle author photos
+  • Generate biographies via API Ninjas
+  • Author lending statistics
+
+  <b>Key Classes: 11</b>
+  <b>Lines of Code: ~800</b>
+end note
+
+note top of book_pkg
+  <b>Domain Module: Book Management</b>
+
+  <b>Responsibilities:</b>
+  • Manage book catalog
+  • Handle book photos
+  • ISBN validation
+  • Co-author management
+
+  <b>Key Classes: 14</b>
+  <b>Lines of Code: ~1000</b>
+end note
+
+note top of lending_pkg
+  <b>Domain Module: Lending Management</b>
+
+  <b>Responsibilities:</b>
+  • Manage book lending operations
+  • Calculate overdue fines
+  • Track lending history
+  • Generate lending reports
+
+  <b>Key Classes: 12</b>
+  <b>Lines of Code: ~900</b>
+
+  <b>Note:</b>
+  Coordinates with Book and Reader domains
+end note
+
+note right of config_pkg
+  <b>Cross-Cutting: Configuration</b>
+
+  <b>Responsibilities:</b>
+  • Security configuration (JWT)
+  • OpenAPI/Swagger setup
+  • Application settings
+
+  <b>Used by: All modules</b>
+end note
+
+note right of exc_pkg
+  <b>Cross-Cutting: Exceptions</b>
+
+  <b>Custom Exceptions:</b>
+  • NotFoundException (404)
+  • ConflictException (409)
+  • ErrorMessage (response DTO)
+
+  <b>Used by: All API and Service layers</b>
+end note
+
+note right of file_pkg
+  <b>Cross-Cutting: File Management</b>
+
+  <b>Responsibilities:</b>
+  • Store uploaded files (photos)
+  • Load files for download
+  • Manage file storage paths
+
+  <b>Used by:</b>
+  • Author photos
+  • Book cover photos
+end note
+
+legend right
+  <b>Package Naming Convention:</b>
+
+  pt.psoft.g1.psoftg1.{domain}management.{layer}
+
+  <b>Layers within each domain:</b>
+  • <b>api/</b> - Controllers, Views, Requests
+  • <b>services/</b> - Business logic, DTOs
+  • <b>repositories/</b> - Data access
+  • <b>model/</b> - Entities, Value Objects
+
+  <b>Package Organization:</b>
+  ✅ <b>Domain-based (vertical slices)</b>
+  • High cohesion within domain
+  • Low coupling between domains
+  • Easy to navigate and understand
+
+  ❌ <b>NOT layer-based (horizontal slices)</b>
+  • Would scatter related code
+  • Harder to navigate
+  • Tighter coupling
+
+  <b>Total Packages: ~30</b>
+  <b>Total Classes: ~144</b>
+endlegend
+
+@enduml

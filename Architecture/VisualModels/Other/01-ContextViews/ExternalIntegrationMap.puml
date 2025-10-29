@@ -1,0 +1,172 @@
+@startuml External Integration Map
+
+skinparam backgroundColor #FEFEFE
+skinparam componentStyle rectangle
+
+title External Integration Map - Library Management System
+
+cloud "Client Environment" {
+    component [Web Browser] as browser
+    component [Mobile App] as mobile
+    component [Postman/API Client] as postman
+}
+
+package "Library Management System" {
+    component [REST API Gateway] as api
+    component [Business Logic] as business
+    component [Authentication Service] as auth
+}
+
+cloud "External Services" {
+    component [API Ninjas\nHistorical Events] as apiNinjas
+    component [Email Service\n(Future)] as email
+}
+
+database "H2 Database" as db
+
+' Client to System
+browser --> api : HTTPS/REST\nJSON\nJWT Token
+mobile --> api : HTTPS/REST\nJSON\nJWT Token
+postman --> api : HTTP/HTTPS\nJSON\nJWT Token
+
+' Internal
+api --> auth : Validate Token
+api --> business : Authorized Requests
+business --> db : JDBC/SQL
+
+' System to External
+business --> apiNinjas : HTTPS/REST\nJSON\nAPI Key Auth
+business ..> email : SMTP\n(Future)
+
+note right of api
+  <b>REST API Endpoints:</b>
+  • /api/authors
+  • /api/books
+  • /api/readers
+  • /api/lendings
+  • /api/genres
+  • /api/public (login)
+
+  <b>Documentation:</b>
+  • OpenAPI 3.0
+  • Swagger UI: /swagger-ui
+  • API Docs: /api-docs
+end note
+
+note left of apiNinjas
+  <b>API Ninjas Integration</b>
+
+  <b>Purpose:</b>
+  Fetch historical events
+  for given dates
+
+  <b>Endpoint:</b>
+  https://api-ninjas.com/api/
+  historicalevents
+
+  <b>Authentication:</b>
+  API Key in header
+
+  <b>Rate Limits:</b>
+  • Free: 10,000 req/month
+  • Max: 100 req/min
+
+  <b>Data Format:</b>
+  JSON array of events
+
+  <b>Usage in System:</b>
+  Enrich author information
+  with historical context
+  for their birth dates
+
+  <b>Criticality:</b>
+  Non-critical (optional
+  enrichment feature)
+end note
+
+note right of email
+  <b>Email Service (Planned)</b>
+
+  <b>Purpose:</b>
+  Send notifications to users
+
+  <b>Use Cases:</b>
+  • Overdue book reminders
+  • New book announcements
+  • Password reset
+  • Account notifications
+
+  <b>Protocol:</b>
+  SMTP
+
+  <b>Provider Options:</b>
+  • SendGrid
+  • Amazon SES
+  • Local SMTP server
+
+  <b>Status:</b>
+  Not yet implemented
+end note
+
+note bottom of browser
+  <b>Web Application</b>
+
+  <b>Technology:</b>
+  HTML5, CSS3, JavaScript
+
+  <b>Framework Options:</b>
+  • React
+  • Angular
+  • Vue.js
+
+  <b>Communication:</b>
+  • REST API via fetch/axios
+  • JWT in Authorization header
+  • JSON request/response
+
+  <b>Status:</b>
+  Generic REST client
+  (no specific web app yet)
+end note
+
+note bottom of mobile
+  <b>Mobile Application</b>
+
+  <b>Platforms:</b>
+  • iOS (Swift/SwiftUI)
+  • Android (Kotlin/Jetpack)
+
+  <b>Communication:</b>
+  • REST API via HTTP client
+  • JWT token storage
+  • Offline capability (future)
+
+  <b>Status:</b>
+  Planned (not implemented)
+end note
+
+' Integration Protocols
+legend right
+  <b>Integration Protocols:</b>
+
+  <b>HTTPS/REST:</b>
+  • Standard HTTP methods
+  • JSON payload
+  • Stateless
+
+  <b>Authentication:</b>
+  • JWT Bearer Token
+  • RSA-signed tokens
+  • Role-based access
+
+  <b>JDBC:</b>
+  • Direct database access
+  • H2 embedded database
+  • Connection pooling
+
+  <b>SMTP (Future):</b>
+  • Standard email protocol
+  • TLS encryption
+endlegend
+
+@enduml

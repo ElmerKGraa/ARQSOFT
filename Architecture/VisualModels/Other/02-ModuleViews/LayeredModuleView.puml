@@ -1,0 +1,486 @@
+@startuml Layered Module View
+
+skinparam backgroundColor #FEFEFE
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+title Layered Module View - Library Management System
+
+' Define layer colors
+skinparam package<<presentation>> {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+}
+
+skinparam package<<business>> {
+    BackgroundColor #FFF3E0
+    BorderColor #F57C00
+}
+
+skinparam package<<data>> {
+    BackgroundColor #F3E5F5
+    BorderColor #7B1FA2
+}
+
+skinparam package<<domain>> {
+    BackgroundColor #E8F5E9
+    BorderColor #388E3C
+}
+
+skinparam package<<infrastructure>> {
+    BackgroundColor #EFEFEF
+    BorderColor #616161
+}
+
+' ============================================================
+' PRESENTATION LAYER (API Controllers + DTOs)
+' ============================================================
+package "Presentation Layer" <<presentation>> {
+
+    package "authormanagement.api" as author_api {
+        class AuthorController <<Controller>> {
+            +create(request): AuthorView
+            +update(id, request): AuthorView
+            +delete(id): void
+            +findAll(): List<AuthorView>
+            +findByName(name): List<AuthorView>
+            +findTopByLendings(): List<AuthorLendingsView>
+        }
+        class AuthorView <<DTO>>
+        class CreateAuthorRequest <<DTO>>
+    }
+
+    package "bookmanagement.api" as book_api {
+        class BookController <<Controller>> {
+            +create(request): BookView
+            +update(id, request): BookView
+            +delete(id): void
+            +findAll(): List<BookView>
+            +findByGenre(genre): List<BookView>
+            +uploadPhoto(id, file): String
+        }
+        class BookView <<DTO>>
+        class CreateBookRequest <<DTO>>
+    }
+
+    package "readermanagement.api" as reader_api {
+        class ReaderController <<Controller>> {
+            +create(request): ReaderView
+            +update(id, request): ReaderView
+            +findAll(): List<ReaderView>
+            +findTopReaders(): List<ReaderView>
+        }
+        class ReaderView <<DTO>>
+        class CreateReaderRequest <<DTO>>
+    }
+
+    package "lendingmanagement.api" as lending_api {
+        class LendingController <<Controller>> {
+            +create(request): LendingView
+            +returnBook(id): LendingView
+            +findAll(): List<LendingView>
+            +findOverdue(): List<LendingView>
+        }
+        class LendingView <<DTO>>
+        class CreateLendingRequest <<DTO>>
+    }
+
+    package "genremanagement.api" as genre_api {
+        class GenreController <<Controller>> {
+            +findAll(): List<GenreView>
+            +findTopByBooks(): List<GenreBookCountView>
+        }
+        class GenreView <<DTO>>
+    }
+
+    package "usermanagement.api" as user_api {
+        class UserController <<Controller>> {
+            +register(request): UserView
+            +login(request): AuthResponse
+        }
+        class AuthRequest <<DTO>>
+        class AuthResponse <<DTO>>
+    }
+}
+
+' ============================================================
+' BUSINESS LAYER (Services)
+' ============================================================
+package "Business Layer" <<business>> {
+
+    package "authormanagement.services" as author_svc {
+        interface AuthorService {
+            +create(request): Author
+            +update(id, request): Author
+            +delete(id): void
+            +findAll(): Iterable<Author>
+        }
+        class AuthorServiceImpl <<Service>>
+    }
+
+    package "bookmanagement.services" as book_svc {
+        interface BookService {
+            +create(request): Book
+            +update(id, request): Book
+            +delete(id): void
+            +findByGenre(genre): List<Book>
+        }
+        class BookServiceImpl <<Service>>
+    }
+
+    package "readermanagement.services" as reader_svc {
+        interface ReaderService {
+            +create(request): ReaderDetails
+            +update(id, request): ReaderDetails
+            +findAll(): Iterable<ReaderDetails>
+        }
+        class ReaderServiceImpl <<Service>>
+    }
+
+    package "lendingmanagement.services" as lending_svc {
+        interface LendingService {
+            +create(request): Lending
+            +returnBook(id): Lending
+            +findOverdue(): List<Lending>
+        }
+        class LendingServiceImpl <<Service>>
+    }
+
+    package "genremanagement.services" as genre_svc {
+        interface GenreService {
+            +findAll(): Iterable<Genre>
+            +findTopByBooks(): List<GenreBookCountDTO>
+            +getAverageLendings(query): List<GenreLendingsDTO>
+        }
+        class GenreServiceImpl <<Service>>
+    }
+
+    package "usermanagement.services" as user_svc {
+        class UserService <<Service>> {
+            +create(request): User
+            +loadUserByUsername(username): UserDetails
+        }
+    }
+}
+
+' ============================================================
+' DATA LAYER (Repositories)
+' ============================================================
+package "Data Layer" <<data>> {
+
+    package "authormanagement.repositories" as author_repo {
+        interface AuthorRepository {
+            +save(author): Author
+            +findById(id): Optional<Author>
+            +findAll(): Iterable<Author>
+            +delete(author): void
+        }
+        class AuthorRepositoryImpl <<Repository>>
+    }
+
+    package "bookmanagement.repositories" as book_repo {
+        interface BookRepository {
+            +save(book): Book
+            +findById(id): Optional<Book>
+            +findByGenre(genre): List<Book>
+        }
+        class BookRepositoryImpl <<Repository>>
+    }
+
+    package "readermanagement.repositories" as reader_repo {
+        interface ReaderRepository {
+            +save(reader): ReaderDetails
+            +findById(id): Optional<ReaderDetails>
+            +findAll(): Iterable<ReaderDetails>
+        }
+        class ReaderRepositoryImpl <<Repository>>
+    }
+
+    package "lendingmanagement.repositories" as lending_repo {
+        interface LendingRepository {
+            +save(lending): Lending
+            +findById(id): Optional<Lending>
+            +findOverdue(): List<Lending>
+        }
+        class LendingRepositoryImpl <<Repository>>
+    }
+
+    package "genremanagement.repositories" as genre_repo {
+        interface GenreRepository {
+            +findAll(): Iterable<Genre>
+            +findByString(name): Optional<Genre>
+            +findTop5GenreByBookCount(): Page<GenreBookCountDTO>
+        }
+        class GenreRepositoryImpl <<Repository>>
+    }
+
+    package "usermanagement.repositories" as user_repo {
+        interface UserRepository {
+            +save(user): User
+            +findByUsername(username): Optional<User>
+        }
+        class UserRepositoryImpl <<Repository>>
+    }
+}
+
+' ============================================================
+' DOMAIN LAYER (Entities & Value Objects)
+' ============================================================
+package "Domain Layer" <<domain>> {
+
+    package "authormanagement.model" as author_model {
+        class Author <<Entity>> {
+            -id: Long
+            -version: long
+            -name: String
+            -bio: Bio
+            -authorNumber: String
+            -photoURI: String
+        }
+        class Bio <<ValueObject>> {
+            -bioText: String
+        }
+    }
+
+    package "bookmanagement.model" as book_model {
+        class Book <<Entity>> {
+            -id: Long
+            -version: long
+            -isbn: Isbn
+            -title: Title
+            -genre: Genre
+            -description: String
+            -authors: List<Author>
+        }
+        class Isbn <<ValueObject>> {
+            -isbn: String
+            +validate(): boolean
+        }
+        class Title <<ValueObject>> {
+            -title: String
+        }
+    }
+
+    package "readermanagement.model" as reader_model {
+        class ReaderDetails <<Entity>> {
+            -id: Long
+            -version: long
+            -readerNumber: String
+            -name: String
+            -birthDate: LocalDate
+            -phoneNumber: String
+            -gdprConsent: boolean
+        }
+    }
+
+    package "lendingmanagement.model" as lending_model {
+        class Lending <<Entity>> {
+            -id: Long
+            -version: long
+            -book: Book
+            -reader: ReaderDetails
+            -startDate: LocalDate
+            -returnedDate: LocalDate
+            -daysOverdue: int
+            -fine: Fine
+        }
+        class Fine <<ValueObject>> {
+            -fineValueInCents: int
+        }
+    }
+
+    package "genremanagement.model" as genre_model {
+        class Genre <<Entity>> {
+            -id: Long
+            -genre: String
+        }
+    }
+
+    package "usermanagement.model" as user_model {
+        class User <<Entity>> {
+            -id: Long
+            -version: long
+            -username: String
+            -password: String
+            -fullName: String
+            -authorities: Set<Role>
+        }
+        enum Role {
+            ADMIN
+            LIBRARIAN
+            READER
+        }
+    }
+}
+
+' ============================================================
+' INFRASTRUCTURE / CROSS-CUTTING
+' ============================================================
+package "Infrastructure Layer" <<infrastructure>> {
+
+    package "configuration" as config {
+        class SecurityConfig {
+            +jwtDecoder(): JwtDecoder
+            +filterChain(): SecurityFilterChain
+        }
+        class OpenApiConfig {
+            +customOpenAPI(): OpenAPI
+        }
+    }
+
+    package "filemanagement" as files {
+        class FileStorageService {
+            +store(file): String
+            +load(filename): Resource
+        }
+    }
+
+    package "exceptions" as exc {
+        class NotFoundException
+        class ConflictException
+        class ErrorMessage
+    }
+}
+
+' ============================================================
+' LAYER DEPENDENCIES (Downward only!)
+' ============================================================
+
+' Presentation → Business
+AuthorController ..> AuthorService : uses
+BookController ..> BookService : uses
+ReaderController ..> ReaderService : uses
+LendingController ..> LendingService : uses
+GenreController ..> GenreService : uses
+UserController ..> UserService : uses
+
+' Business → Data
+AuthorServiceImpl ..> AuthorRepository : uses
+BookServiceImpl ..> BookRepository : uses
+ReaderServiceImpl ..> ReaderRepository : uses
+LendingServiceImpl ..> LendingRepository : uses
+GenreServiceImpl ..> GenreRepository : uses
+UserService ..> UserRepository : uses
+
+' Business → Domain
+AuthorServiceImpl ..> Author : creates/uses
+BookServiceImpl ..> Book : creates/uses
+ReaderServiceImpl ..> ReaderDetails : creates/uses
+LendingServiceImpl ..> Lending : creates/uses
+GenreServiceImpl ..> Genre : uses
+UserService ..> User : creates/uses
+
+' Data → Domain
+AuthorRepositoryImpl ..> Author : persists
+BookRepositoryImpl ..> Book : persists
+ReaderRepositoryImpl ..> ReaderDetails : persists
+LendingRepositoryImpl ..> Lending : persists
+GenreRepositoryImpl ..> Genre : persists
+UserRepositoryImpl ..> User : persists
+
+' Domain relationships
+Book --> Genre : has
+Book --> Author : has authors
+Lending --> Book : borrows
+Lending --> ReaderDetails : borrowed by
+User --> Role : has roles
+Author --> Bio : contains
+Book --> Isbn : has
+Book --> Title : has
+Lending --> Fine : calculates
+
+' Cross-cutting dependencies
+AuthorController ..> NotFoundException : throws
+BookController ..> NotFoundException : throws
+AuthorServiceImpl ..> FileStorageService : uses
+BookServiceImpl ..> FileStorageService : uses
+
+' Service interface implementations
+AuthorServiceImpl ..|> AuthorService : implements
+BookServiceImpl ..|> BookService : implements
+ReaderServiceImpl ..|> ReaderService : implements
+LendingServiceImpl ..|> LendingService : implements
+GenreServiceImpl ..|> GenreService : implements
+
+' Repository interface implementations
+AuthorRepositoryImpl ..|> AuthorRepository : implements
+BookRepositoryImpl ..|> BookRepository : implements
+ReaderRepositoryImpl ..|> ReaderRepository : implements
+LendingRepositoryImpl ..|> LendingRepository : implements
+GenreRepositoryImpl ..|> GenreRepository : implements
+UserRepositoryImpl ..|> UserRepository : implements
+
+' Cross-domain service dependencies
+LendingServiceImpl ..> BookService : uses
+LendingServiceImpl ..> ReaderService : uses
+
+note top of "Presentation Layer"
+  <b>Layer Responsibility:</b>
+  • Handle HTTP requests/responses
+  • Input validation
+  • Authentication/Authorization
+  • DTO mapping
+
+  <b>Dependency Rule:</b>
+  May only depend on Business Layer
+  (through interfaces)
+end note
+
+note top of "Business Layer"
+  <b>Layer Responsibility:</b>
+  • Business logic
+  • Business rule enforcement
+  • Transaction management
+  • Coordination
+
+  <b>Dependency Rule:</b>
+  May depend on Data Layer and Domain Layer
+  May NOT depend on Presentation Layer
+end note
+
+note top of "Data Layer"
+  <b>Layer Responsibility:</b>
+  • Data access abstraction
+  • Query execution
+  • Persistence operations
+
+  <b>Dependency Rule:</b>
+  May depend on Domain Layer only
+  May NOT depend on Business or Presentation
+end note
+
+note top of "Domain Layer"
+  <b>Layer Responsibility:</b>
+  • Core business entities
+  • Domain invariants
+  • Value objects
+
+  <b>Dependency Rule:</b>
+  Must NOT depend on any other layer
+  (except JPA annotations)
+end note
+
+legend right
+  <b>Dependency Rules (Strict Layering):</b>
+
+  ✅ <b>Allowed:</b>
+  • Presentation → Business (via interfaces)
+  • Business → Data (via interfaces)
+  • Business → Domain (entities)
+  • Data → Domain (entities)
+  • Any → Infrastructure (cross-cutting)
+
+  ❌ <b>Forbidden:</b>
+  • Domain → Any layer
+  • Data → Business
+  • Data → Presentation
+  • Presentation → Data (bypass business)
+
+  <b>Pattern:</b>
+  Interface-based programming
+  Dependency injection (Spring)
+  DTO mapping at layer boundaries
+endlegend
+
+@enduml

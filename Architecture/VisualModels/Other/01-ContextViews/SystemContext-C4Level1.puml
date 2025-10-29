@@ -1,0 +1,54 @@
+@startuml System Context Diagram - C4 Level 1
+
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+LAYOUT_WITH_LEGEND()
+
+title System Context Diagram - Library Management System (C4 Level 1)
+
+Person(librarian, "Librarian", "Library staff member who manages the library operations")
+Person(reader, "Reader", "Library patron who borrows books and manages their profile")
+Person(anonymous, "Anonymous User", "Unregistered visitor who can register as a reader")
+
+System(library_system, "Library Management System", "Manages library operations: authors, books, readers, lendings, and reporting")
+
+System_Ext(api_ninjas, "API Ninjas", "External API providing historical events data for enrichment")
+System_Ext(email_system, "Email System", "Future: Sends notifications for overdue books and announcements")
+
+Rel(librarian, library_system, "Manages books, authors, readers, lendings; generates reports", "HTTPS/REST API, JWT Auth")
+Rel(reader, library_system, "Borrows books, views catalog, manages profile", "HTTPS/REST API, JWT Auth")
+Rel(anonymous, library_system, "Registers as new reader", "HTTPS/REST API")
+
+Rel(library_system, api_ninjas, "Fetches historical events", "HTTPS/REST, API Key")
+Rel_Back(library_system, email_system, "Sends notifications", "SMTP (Future)")
+
+note right of library_system
+  <b>Core Functionality:</b>
+  • Author Management
+  • Book Catalog Management
+  • Reader Management
+  • Lending & Returns
+  • Fine Calculation
+  • Reporting & Analytics
+
+  <b>Technology:</b>
+  • Java Spring Boot
+  • RESTful API
+  • JWT Authentication
+  • H2 Database
+end note
+
+note right of api_ninjas
+  <b>Purpose:</b>
+  Provides historical events
+  for given dates
+
+  <b>Usage:</b>
+  Enrich author information
+  (non-critical feature)
+
+  <b>Rate Limit:</b>
+  10,000 requests/month
+end note
+
+@enduml

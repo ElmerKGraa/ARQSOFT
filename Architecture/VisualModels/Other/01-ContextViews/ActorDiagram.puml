@@ -1,0 +1,130 @@
+@startuml Actor Diagram
+
+skinparam actorStyle awesome
+skinparam backgroundColor #FEFEFE
+
+title Actor Diagram - Library Management System\nUser Types and Their Capabilities
+
+package "Actors" {
+    actor "Anonymous\nUser" as anon
+    actor "Reader" as reader
+    actor "Librarian" as librarian
+    actor "Admin" as admin
+}
+
+package "Library Management System" {
+    usecase "Register as Reader" as UC_Register
+    usecase "Login" as UC_Login
+
+    package "Reader Capabilities" {
+        usecase "View Book Catalog" as UC_ViewCatalog
+        usecase "Search Books" as UC_SearchBooks
+        usecase "View Own Lendings" as UC_ViewLendings
+        usecase "Return Book" as UC_ReturnBook
+        usecase "Manage Own Profile" as UC_ManageProfile
+        usecase "Get Book Suggestions" as UC_Suggestions
+        usecase "View Authors" as UC_ViewAuthors
+    }
+
+    package "Librarian Capabilities" {
+        usecase "Manage Books" as UC_ManageBooks
+        usecase "Manage Authors" as UC_ManageAuthors
+        usecase "Manage Readers" as UC_ManageReaders
+        usecase "Create Lending" as UC_CreateLending
+        usecase "View All Lendings" as UC_ViewAllLendings
+        usecase "View Overdue Lendings" as UC_ViewOverdue
+        usecase "Generate Reports" as UC_Reports
+        usecase "Manage Genres" as UC_ManageGenres
+    }
+
+    package "Admin Capabilities" {
+        usecase "Manage Users" as UC_ManageUsers
+        usecase "System Configuration" as UC_Config
+        usecase "Full System Access" as UC_FullAccess
+    }
+}
+
+' Anonymous User
+anon --> UC_Register
+anon --> UC_Login
+
+' Reader (includes Reader capabilities)
+reader --> UC_Login
+reader --> UC_ViewCatalog
+reader --> UC_SearchBooks
+reader --> UC_ViewLendings
+reader --> UC_ReturnBook
+reader --> UC_ManageProfile
+reader --> UC_Suggestions
+reader --> UC_ViewAuthors
+
+' Librarian (includes Reader + Librarian capabilities)
+librarian --> UC_Login
+librarian --> UC_ViewCatalog
+librarian --> UC_SearchBooks
+librarian --> UC_ViewAuthors
+librarian --> UC_ManageBooks
+librarian --> UC_ManageAuthors
+librarian --> UC_ManageReaders
+librarian --> UC_CreateLending
+librarian --> UC_ViewAllLendings
+librarian --> UC_ViewOverdue
+librarian --> UC_Reports
+librarian --> UC_ManageGenres
+
+' Admin (full access)
+admin --> UC_FullAccess
+admin --> UC_ManageUsers
+admin --> UC_Config
+
+note right of anon
+  <b>Anonymous User</b>
+  • No authentication required
+  • Can only register or login
+  • Public access endpoints
+end note
+
+note right of reader
+  <b>Reader</b>
+  • Registered library patron
+  • Can borrow and return books
+  • Can view catalog and own profile
+  • Limited to own data (self-access)
+
+  <b>Authentication:</b>
+  JWT Token with READER role
+end note
+
+note right of librarian
+  <b>Librarian</b>
+  • Library staff member
+  • All Reader capabilities +
+  • Can manage books, authors
+  • Can create lendings
+  • Can generate reports
+  • Access to all data
+
+  <b>Authentication:</b>
+  JWT Token with LIBRARIAN role
+end note
+
+note left of admin
+  <b>Admin</b>
+  • System administrator
+  • Full access to all operations
+  • Can manage users and roles
+  • System configuration
+
+  <b>Authentication:</b>
+  JWT Token with ADMIN role
+end note
+
+legend right
+  <b>Actor Hierarchy:</b>
+  Anonymous < Reader < Librarian < Admin
+
+  Each higher level includes
+  capabilities of lower levels
+endlegend
+
+@enduml

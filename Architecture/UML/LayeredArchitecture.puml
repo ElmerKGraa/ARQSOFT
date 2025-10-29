@@ -1,0 +1,532 @@
+@startuml Layered Architecture - Detailed View
+
+skinparam packageStyle rectangle
+skinparam backgroundColor #FEFEFE
+
+skinparam package {
+    BackgroundColor<<presentation>> #E3F2FD
+    BackgroundColor<<business>> #FFF3E0
+    BackgroundColor<<data>> #E8F5E9
+    BackgroundColor<<domain>> #F3E5F5
+    BackgroundColor<<security>> #FCE4EC
+    BackgroundColor<<shared>> #E0F2F1
+    BorderColor #424242
+    FontSize 10
+}
+
+title Library Management System - Layered Architecture (Detailed)
+
+together {
+    package "Presentation Layer - API Controllers" as PresentationLayer <<presentation>> {
+        package "authormanagement.api" {
+            class AuthorController {
+                + createAuthor()
+                + updateAuthor()
+                + getAuthor()
+                + searchAuthors()
+                + getAuthorBooks()
+                + getAuthorCoAuthors()
+                + getTop5Authors()
+            }
+            class AuthorView
+            class AuthorViewMapper
+        }
+
+        package "bookmanagement.api" {
+            class BookController {
+                + createBook()
+                + updateBook()
+                + getBook()
+                + searchBooks()
+                + getTop5Books()
+                + getBookSuggestions()
+            }
+            class BookView
+            class BookViewMapper
+        }
+
+        package "readermanagement.api" {
+            class ReaderController {
+                + createReader()
+                + updateReader()
+                + getReader()
+                + searchReaders()
+                + getTop5Readers()
+                + getReaderLendings()
+            }
+            class ReaderView
+            class ReaderViewMapper
+        }
+
+        package "lendingmanagement.api" {
+            class LendingController {
+                + createLending()
+                + setLendingReturned()
+                + getLending()
+                + getOverdueLendings()
+                + getAverageDuration()
+            }
+            class LendingView
+            class LendingViewMapper
+        }
+
+        package "genremanagement.api" {
+            class GenreController {
+                + getTop5Genres()
+                + getAverageLendings()
+                + getLendingsPerMonth()
+            }
+            class GenreView
+            class GenreViewMapper
+        }
+
+        package "auth.api" {
+            class AuthApi {
+                + login()
+            }
+        }
+    }
+}
+
+together {
+    package "Business Layer - Services" as BusinessLayer <<business>> {
+        package "authormanagement.services" {
+            interface AuthorService
+            class AuthorServiceImpl {
+                - authorRepository
+                - fileStorageService
+                - forbiddenNameService
+                + create()
+                + update()
+                + findById()
+                + searchByName()
+                + getTop5()
+                + getCoAuthors()
+            }
+        }
+
+        package "bookmanagement.services" {
+            interface BookService
+            class BookServiceImpl {
+                - bookRepository
+                - genreRepository
+                - authorRepository
+                - fileStorageService
+                + create()
+                + update()
+                + findByIsbn()
+                + searchByTitle()
+                + getTop5()
+                + getSuggestions()
+            }
+        }
+
+        package "readermanagement.services" {
+            interface ReaderService
+            class ReaderServiceImpl {
+                - readerRepository
+                - userRepository
+                - fileStorageService
+                - externalApiService
+                + create()
+                + update()
+                + findByNumber()
+                + getTop5()
+                + getLendings()
+            }
+        }
+
+        package "lendingmanagement.services" {
+            interface LendingService
+            class LendingServiceImpl {
+                - lendingRepository
+                - bookRepository
+                - readerRepository
+                + create()
+                + setReturned()
+                + findByNumber()
+                + getOverdue()
+                + getAvgDuration()
+            }
+        }
+
+        package "genremanagement.services" {
+            interface GenreService
+            class GenreServiceImpl {
+                - genreRepository
+                - lendingRepository
+                + findAll()
+                + findTopByBooks()
+                + getAvgLendings()
+            }
+        }
+    }
+}
+
+together {
+    package "Data Layer - Repositories" as DataLayer <<data>> {
+        package "authormanagement.repositories" {
+            interface AuthorRepository {
+                + findByName()
+                + findTop5ByLendings()
+            }
+        }
+
+        package "bookmanagement.repositories" {
+            interface BookRepository {
+                + findByIsbn()
+                + findByTitle()
+                + findByGenre()
+                + findTop5ByLendings()
+            }
+        }
+
+        package "readermanagement.repositories" {
+            interface ReaderRepository {
+                + findByReaderNumber()
+                + findByName()
+                + findTop5()
+            }
+        }
+
+        package "lendingmanagement.repositories" {
+            interface LendingRepository {
+                + findByLendingNumber()
+                + findOverdue()
+                + findByReader()
+                + findByBook()
+                + getAvgDuration()
+            }
+        }
+
+        package "genremanagement.repositories" {
+            interface GenreRepository {
+                + findByGenre()
+                + findTopByBooks()
+            }
+        }
+
+        package "usermanagement.repositories" {
+            interface UserRepository {
+                + findByUsername()
+            }
+        }
+    }
+}
+
+together {
+    package "Domain Model Layer" as DomainLayer <<domain>> {
+        package "authormanagement.model" {
+            class Author {
+                - Long authorNumber
+                - Name name
+                - Bio bio
+                - Photo photo
+                - long version
+                + applyPatch()
+                + removePhoto()
+            }
+        }
+
+        package "bookmanagement.model" {
+            class Book {
+                - Isbn isbn
+                - Title title
+                - Genre genre
+                - Description description
+                - List<Author> authors
+                - Photo photo
+                - Long version
+                + applyPatch()
+            }
+        }
+
+        package "readermanagement.model" {
+            class ReaderDetails {
+                - ReaderNumber readerNumber
+                - Reader reader
+                - BirthDate birthDate
+                - PhoneNumber phoneNumber
+                - List<Genre> interestList
+                - boolean gdprConsent
+                - Photo photo
+                - Long version
+                + applyPatch()
+            }
+        }
+
+        package "lendingmanagement.model" {
+            class Lending {
+                - LendingNumber lendingNumber
+                - Book book
+                - ReaderDetails readerDetails
+                - LocalDate startDate
+                - LocalDate limitDate
+                - LocalDate returnedDate
+                - String commentary
+                - long version
+                - int fineValuePerDayInCents
+                + setReturned()
+                + getDaysDelayed()
+                + getFineValueInCents()
+            }
+            class Fine
+        }
+
+        package "genremanagement.model" {
+            class Genre {
+                - String genre
+            }
+        }
+
+        package "usermanagement.model" {
+            class User {
+                - String username
+                - Password password
+                - Set<Role> authorities
+            }
+            class Librarian
+            class Reader
+        }
+
+        package "shared.model" {
+            abstract class EntityWithPhoto {
+                - Photo photo
+                # setPhotoInternal()
+            }
+            class Photo
+            class Name
+        }
+
+        package "Value Objects" {
+            class Isbn
+            class Title
+            class Bio
+            class Description
+            class ReaderNumber
+            class LendingNumber
+            class BirthDate
+            class PhoneNumber
+            class EmailAddress
+            class Password
+        }
+    }
+}
+
+together {
+    package "Security Infrastructure" as SecurityLayer <<security>> {
+        package "configuration" {
+            class SecurityConfig {
+                + securityFilterChain()
+                + jwtEncoder()
+                + jwtDecoder()
+                + authenticationManager()
+                + passwordEncoder()
+                + corsFilter()
+            }
+        }
+
+        package "auth.services" {
+            class UserAuthService {
+                + authenticate()
+                + generateToken()
+            }
+        }
+    }
+}
+
+together {
+    package "Shared Infrastructure" as SharedLayer <<shared>> {
+        package "shared.services" {
+            class FileStorageService {
+                + storeFile()
+                + loadFile()
+                + deleteFile()
+            }
+            class ForbiddenNameService {
+                + isForbidden()
+            }
+            class ConcurrencyService {
+                + checkVersion()
+            }
+        }
+
+        package "external.service" {
+            class ApiNinjasService {
+                + getHistoricalEvents()
+            }
+        }
+
+        package "exceptions" {
+            class GlobalExceptionHandler {
+                + handleNotFoundException()
+                + handleConflictException()
+                + handleValidationException()
+            }
+        }
+
+        package "shared.api" {
+            class ListResponse<T>
+            class SearchRequest<T>
+        }
+
+        package "shared.services" {
+            class Page
+        }
+    }
+}
+
+database "H2 Database" {
+    storage BOOK
+    storage AUTHOR
+    storage LENDING
+    storage READER_DETAILS
+    storage GENRE
+    storage USER
+}
+
+' Layer Dependencies (downward only)
+AuthorController --> AuthorService
+AuthorService --> AuthorRepository
+AuthorRepository --> Author
+AuthorService --> Author
+
+BookController --> BookService
+BookService --> BookRepository
+BookRepository --> Book
+BookService --> Book
+
+ReaderController --> ReaderService
+ReaderService --> ReaderRepository
+ReaderRepository --> ReaderDetails
+ReaderService --> ReaderDetails
+
+LendingController --> LendingService
+LendingService --> LendingRepository
+LendingRepository --> Lending
+LendingService --> Lending
+
+GenreController --> GenreService
+GenreService --> GenreRepository
+GenreRepository --> Genre
+GenreService --> Genre
+
+' Domain relationships
+Book --> Genre
+Book --> Author
+Lending --> Book
+Lending --> ReaderDetails
+ReaderDetails --> Reader
+ReaderDetails --> Genre
+Author --|> EntityWithPhoto
+Book --|> EntityWithPhoto
+ReaderDetails --|> EntityWithPhoto
+Librarian --|> User
+Reader --|> User
+
+' Repositories to Database
+AuthorRepository --> AUTHOR
+BookRepository --> BOOK
+ReaderRepository --> READER_DETAILS
+LendingRepository --> LENDING
+GenreRepository --> GENRE
+UserRepository --> USER
+
+' Cross-cutting concerns
+AuthorService --> FileStorageService
+BookService --> FileStorageService
+ReaderService --> FileStorageService
+AuthorService --> ForbiddenNameService
+ReaderService --> ForbiddenNameService
+AuthorService --> ConcurrencyService
+BookService --> ConcurrencyService
+LendingService --> ConcurrencyService
+ReaderService --> ApiNinjasService
+PresentationLayer --> GlobalExceptionHandler
+
+' Security
+PresentationLayer --> SecurityConfig
+SecurityConfig --> UserAuthService
+UserAuthService --> UserRepository
+
+note top of PresentationLayer
+  <b>Presentation Layer Responsibilities:</b>
+  • REST endpoint exposure (@RestController)
+  • HTTP request/response handling
+  • DTO mapping (Entity ↔ View)
+  • Input validation (@Valid)
+  • API documentation (@Tag)
+  • Status code management
+
+  <b>Design Patterns:</b>
+  • DTO Pattern (Data Transfer Objects)
+  • Mapper Pattern (Entity to View conversion)
+  • REST Resource Pattern
+end note
+
+note top of BusinessLayer
+  <b>Business Layer Responsibilities:</b>
+  • Business logic execution
+  • Transaction management (@Transactional)
+  • Domain operations orchestration
+  • Business rule enforcement
+  • Service composition
+  • DTO to Entity mapping
+
+  <b>Design Patterns:</b>
+  • Service Pattern
+  • Facade Pattern
+  • Strategy Pattern (for algorithms)
+end note
+
+note top of DataLayer
+  <b>Data Layer Responsibilities:</b>
+  • Data access abstraction
+  • CRUD operations
+  • Custom queries (@Query)
+  • Database transaction handling
+  • Entity lifecycle management
+
+  <b>Design Patterns:</b>
+  • Repository Pattern
+  • DAO Pattern (Data Access Object)
+  • Spring Data JPA
+end note
+
+note top of DomainLayer
+  <b>Domain Layer Responsibilities:</b>
+  • Business entities (@Entity)
+  • Domain logic encapsulation
+  • Value Objects (immutable)
+  • Aggregate roots
+  • Domain invariants enforcement
+  • Rich domain models
+
+  <b>Design Patterns:</b>
+  • Entity Pattern
+  • Value Object Pattern
+  • Aggregate Pattern
+  • Domain Events (implicit)
+end note
+
+note bottom of SecurityLayer
+  <b>Security Responsibilities:</b>
+  • Authentication (JWT)
+  • Authorization (RBAC)
+  • Password encryption
+  • Token validation
+  • CORS configuration
+  • Session management
+end note
+
+note bottom of SharedLayer
+  <b>Shared Infrastructure Responsibilities:</b>
+  • Cross-cutting concerns
+  • File management
+  • External API integration
+  • Exception handling
+  • Pagination utilities
+  • Common DTOs
+end note
+
+@enduml

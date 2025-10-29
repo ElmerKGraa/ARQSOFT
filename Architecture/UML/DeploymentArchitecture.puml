@@ -1,0 +1,196 @@
+@startuml Deployment Architecture
+
+!define NODE rectangle
+
+skinparam node {
+    BackgroundColor #E3F2FD
+    BorderColor #1976D2
+    FontSize 11
+}
+
+skinparam artifact {
+    BackgroundColor #FFF3E0
+    BorderColor #F57C00
+}
+
+skinparam database {
+    BackgroundColor #E8F5E9
+    BorderColor #388E3C
+}
+
+skinparam cloud {
+    BackgroundColor #FCE4EC
+    BorderColor #C2185B
+}
+
+title Library Management System - Deployment Architecture
+
+actor "End User" as User
+
+cloud "Client Environment" {
+    node "Web Browser" as Browser {
+        artifact "Web Application\n(HTML/CSS/JavaScript)" as WebApp
+    }
+
+    node "Mobile Device" as Mobile {
+        artifact "Mobile Application\n(Android/iOS)" as MobileApp
+    }
+
+    node "API Testing Tool" as Testing {
+        artifact "Postman\nSwagger UI" as TestTool
+    }
+}
+
+cloud "Internet" as Internet
+
+node "Application Server" as AppServer {
+    node "<<Embedded Server>>\nSpring Boot\n(Tomcat)" as Tomcat {
+        artifact "psoft-g1.jar\n(Executable JAR)" as AppJar {
+            component "Spring MVC\nREST Controllers" as Controllers
+            component "Spring Security\nJWT Filter Chain" as Security
+            component "Service Layer\nBusiness Logic" as Services
+            component "Spring Data JPA\nRepositories" as Repositories
+        }
+    }
+
+    folder "File System" as FileSystem {
+        file "uploads-psoft-g1/\n(Photos)" as Uploads
+        file "application.properties" as Config
+        file "library.properties" as BizConfig
+        file "rsa.public.key" as PublicKey
+        file "rsa.private.key" as PrivateKey
+        file "forbiddenNames.txt" as ForbiddenList
+    }
+}
+
+database "H2 Database Server" as H2Server {
+    node "<<H2 TCP Server>>\nlocalhost:9092" as H2Process {
+        database "psoft-g1.mv.db\n(File-based)" as H2DB
+    }
+}
+
+note bottom of H2Server
+  <b>Alternative Configurations:</b>
+  • TCP Mode: H2 Console running separately
+  • File Mode: Direct file access (no console)
+  • In-Memory: No persistence (testing)
+end note
+
+cloud "External Services" as External {
+    node "API Ninjas" as ApiNinjas {
+        artifact "Historical Events API" as HistoricalAPI
+    }
+}
+
+' User connections
+User --> Browser
+User --> Mobile
+User --> Testing
+
+' Client to Internet
+Browser --> Internet : HTTPS
+MobileApp --> Internet : HTTPS
+TestTool --> Internet : HTTP/HTTPS
+
+' Internet to App Server
+Internet --> Controllers : HTTP/HTTPS\nPort: 8080\nREST API
+
+' Security Filter
+Controllers --> Security : All Requests
+Security --> Controllers : Authorized\nRequests
+
+' Internal App Components
+Controllers --> Services
+Services --> Repositories
+Repositories --> H2Process : JDBC\njdbc:h2:tcp://localhost/~/psoft-g1
+
+' File System Access
+Services --> Uploads : Read/Write\nPhotos
+AppJar --> Config : Load Config
+AppJar --> BizConfig : Load Business Rules
+Security --> PublicKey : Load RSA Key
+Security --> PrivateKey : Load RSA Key
+Services --> ForbiddenList : Validate Names
+
+' H2 Database
+H2Process --> H2DB : Read/Write
+
+' External API Integration
+Services --> ApiNinjas : HTTPS\nAPI Key Auth
+
+note right of Controllers
+  <b>REST API Endpoints</b>
+  • /api/authors
+  • /api/books
+  • /api/readers
+  • /api/lendings
+  • /api/genres
+  • /api/public (login)
+
+  <b>API Documentation</b>
+  • /swagger-ui
+  • /api-docs
+end note
+
+note right of Security
+  <b>Security Configuration</b>
+  • Stateless Session (JWT)
+  • CORS Enabled
+  • CSRF Disabled
+  • Bearer Token Auth
+  • Role-Based Access Control
+    - ADMIN
+    - LIBRARIAN
+    - READER
+end note
+
+note right of H2DB
+  <b>Database Tables</b>
+  • BOOK
+  • AUTHOR
+  • LENDING
+  • READER_DETAILS
+  • GENRE
+  • USER
+  • BOOK_AUTHORS (join)
+  • READER_DETAILS_INTEREST_LIST (join)
+end note
+
+note left of FileSystem
+  <b>Configuration Files</b>
+
+  <b>application.properties:</b>
+  • Database connection
+  • JWT key locations
+  • File upload settings
+  • OpenAPI config
+  • API Ninjas key
+
+  <b>library.properties:</b>
+  • lendingDurationInDays=15
+  • fineValuePerDayInCents=200
+  • minimumReaderAge=12
+  • suggestionsLimitPerGenre=2
+end note
+
+note bottom of AppServer
+  <b>Deployment Package</b>
+
+  <b>Technology Stack:</b>
+  • Java 17+
+  • Spring Boot 3.x
+  • Embedded Tomcat
+  • H2 Database
+
+  <b>Deployment Options:</b>
+  1. Standalone JAR: java -jar psoft-g1.jar
+  2. IDE: Run PsoftG1Application.main()
+  3. Maven: mvn spring-boot:run
+
+  <b>Port Configuration:</b>
+  • Application: 8080 (default)
+  • H2 TCP Server: 9092 (if used)
+  • H2 Console: 8080/h2-console
+end note
+
+@enduml

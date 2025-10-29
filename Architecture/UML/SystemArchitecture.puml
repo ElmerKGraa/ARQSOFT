@@ -1,0 +1,191 @@
+@startuml System Architecture - Component Diagram
+
+!define RECTANGLE class
+
+skinparam componentStyle rectangle
+skinparam backgroundColor #FEFEFE
+skinparam component {
+    BackgroundColor<<presentation>> #E3F2FD
+    BackgroundColor<<business>> #FFF3E0
+    BackgroundColor<<data>> #E8F5E9
+    BackgroundColor<<security>> #FCE4EC
+    BackgroundColor<<shared>> #F3E5F5
+    BorderColor #424242
+    FontSize 11
+}
+
+title Library Management System - Component Diagram (Layered Architecture)
+
+package "Presentation Layer (API)" as PresentationLayer <<presentation>> {
+    component [AuthApi] as AuthAPI
+    component [AuthorController] as AuthorAPI
+    component [BookController] as BookAPI
+    component [ReaderController] as ReaderAPI
+    component [LendingController] as LendingAPI
+    component [GenreController] as GenreAPI
+    component [UserAdminApi] as UserAPI
+}
+
+package "Business Layer (Services)" as BusinessLayer <<business>> {
+    component [AuthorService] as AuthorService
+    component [BookService] as BookService
+    component [ReaderService] as ReaderService
+    component [LendingService] as LendingService
+    component [GenreService] as GenreService
+    component [UserService] as UserService
+}
+
+package "Data Layer (Repositories)" as DataLayer <<data>> {
+    component [AuthorRepository] as AuthorRepo
+    component [BookRepository] as BookRepo
+    component [ReaderRepository] as ReaderRepo
+    component [LendingRepository] as LendingRepo
+    component [GenreRepository] as GenreRepo
+    component [UserRepository] as UserRepo
+}
+
+package "Security Infrastructure" as SecurityLayer <<security>> {
+    component [SecurityConfig] as SecurityConfig
+    component [JwtEncoder/Decoder] as JWT
+    component [AuthenticationManager] as AuthMgr
+    component [UserDetailsService] as UserDetails
+}
+
+package "Shared Infrastructure" as SharedLayer <<shared>> {
+    component [FileStorageService] as FileStorage
+    component [ForbiddenNameService] as ForbiddenNames
+    component [ConcurrencyService] as Concurrency
+    component [ApiNinjasService] as ExternalAPI
+    component [GlobalExceptionHandler] as ExceptionHandler
+}
+
+package "Domain Model" as DomainModel {
+    component [Author\nBook\nLending\nReader\nGenre\nUser] as Entities
+    component [Value Objects\n(ISBN, Title, Name, etc.)] as ValueObjects
+}
+
+database "H2 Database" as DB {
+    storage "Book Table"
+    storage "Author Table"
+    storage "Lending Table"
+    storage "Reader Table"
+    storage "Genre Table"
+    storage "User Table"
+}
+
+folder "File System" as FileSystem {
+    file "uploads-psoft-g1/"
+    file "rsa.public.key"
+    file "rsa.private.key"
+    file "forbiddenNames.txt"
+}
+
+cloud "External Services" as External {
+    component [API Ninjas] as ApiNinjas
+}
+
+actor "Client Application\n(Web/Mobile)" as Client
+
+' Presentation to Business Layer
+AuthorAPI --> AuthorService
+BookAPI --> BookService
+ReaderAPI --> ReaderService
+LendingAPI --> LendingService
+GenreAPI --> GenreService
+UserAPI --> UserService
+AuthAPI --> UserService
+
+' Business to Data Layer
+AuthorService --> AuthorRepo
+BookService --> BookRepo
+ReaderService --> ReaderRepo
+LendingService --> LendingRepo
+GenreService --> GenreRepo
+UserService --> UserRepo
+
+' Data Layer to Database
+AuthorRepo --> DB
+BookRepo --> DB
+ReaderRepo --> DB
+LendingRepo --> DB
+GenreRepo --> DB
+UserRepo --> DB
+
+' Business Layer to Domain Model
+AuthorService ..> Entities
+BookService ..> Entities
+ReaderService ..> Entities
+LendingService ..> Entities
+GenreService ..> Entities
+Entities ..> ValueObjects
+
+' Security Layer interactions
+Client --> AuthAPI : HTTP/REST\n+ JWT Token
+AuthAPI --> SecurityConfig : authenticate
+SecurityConfig --> JWT : validate token
+SecurityConfig --> AuthMgr : authenticate
+AuthMgr --> UserDetails : load user
+UserDetails --> UserRepo : find user
+SecurityConfig --> PresentationLayer : authorize
+
+' Shared services
+AuthorService --> FileStorage : manage photos
+BookService --> FileStorage : manage photos
+ReaderService --> FileStorage : manage photos
+AuthorService --> ForbiddenNames : validate names
+ReaderService --> ForbiddenNames : validate names
+AuthorService --> Concurrency : check version
+BookService --> Concurrency : check version
+LendingService --> Concurrency : check version
+ReaderService --> ExternalAPI : enrich data
+PresentationLayer --> ExceptionHandler : handle errors
+
+' File System interactions
+FileStorage --> FileSystem : read/write files
+JWT --> FileSystem : load keys
+ForbiddenNames --> FileSystem : load list
+
+' External API
+ExternalAPI --> ApiNinjas : HTTP request
+
+note right of PresentationLayer
+  <b>Presentation Layer</b>
+  - REST Controllers
+  - Request/Response DTOs
+  - Input Validation
+  - HTTP Mapping
+end note
+
+note right of BusinessLayer
+  <b>Business Layer</b>
+  - Business Logic
+  - Transaction Management
+  - Domain Operations
+  - Service Orchestration
+end note
+
+note right of DataLayer
+  <b>Data Layer</b>
+  - Data Access
+  - JPA Repositories
+  - Query Methods
+  - Spring Data
+end note
+
+note left of SecurityLayer
+  <b>Security Infrastructure</b>
+  - JWT Authentication
+  - Role-Based Access Control
+  - Password Encryption (BCrypt)
+  - CORS Configuration
+end note
+
+note left of SharedLayer
+  <b>Shared Infrastructure</b>
+  - Cross-Cutting Concerns
+  - File Management
+  - External Integration
+  - Exception Handling
+end note
+
+@enduml

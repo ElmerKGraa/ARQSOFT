@@ -1,0 +1,157 @@
+@startuml Container Architecture - C4 Model
+
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+!define DEVICONS https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/master/devicons
+!include DEVICONS/java.puml
+!include DEVICONS/spring.puml
+!include DEVICONS/database.puml
+
+title Library Management System - Container Diagram (C4 Model)
+
+LAYOUT_WITH_LEGEND()
+
+Person(librarian, "Librarian", "Manages books, authors, lendings, and generates reports")
+Person(reader, "Reader", "Borrows books, views catalog, manages profile")
+Person(anonymous, "Anonymous User", "Registers as new reader")
+
+System_Boundary(library_system, "Library Management System") {
+
+    Container(web_app, "Web Application", "Browser, JavaScript", "Provides library functionality to users via web browser", $sprite="web")
+
+    Container(mobile_app, "Mobile Application", "Android/iOS", "Provides library functionality to users via mobile device", $sprite="mobile")
+
+    Container(api_gateway, "API Gateway", "Spring Boot, Spring MVC", "Provides REST API endpoints for all library operations. Handles authentication, authorization, and routing", $sprite="spring")
+
+    Container(auth_service, "Authentication Service", "Spring Security, JWT", "Handles user authentication, JWT token generation and validation, role-based access control", $sprite="java")
+
+    ContainerDb(app_database, "Application Database", "H2 Database", "Stores books, authors, readers, lendings, genres, users, and relationships", $sprite="database")
+
+    Container(file_storage, "File Storage Service", "File System", "Stores uploaded photos for authors, books, and readers")
+
+    Container(business_logic, "Business Logic Layer", "Spring Services", "Contains all business rules: lending rules, fine calculations, validation, domain operations", $sprite="java")
+
+    Container(data_access, "Data Access Layer", "Spring Data JPA", "Provides abstraction over database operations with repository pattern", $sprite="spring")
+}
+
+System_Ext(external_api, "API Ninjas", "External API providing historical events data for enrichment")
+
+System_Ext(email_system, "Email System", "Future: Send notifications for overdue books")
+
+' User to Containers
+Rel(librarian, web_app, "Uses", "HTTPS")
+Rel(librarian, mobile_app, "Uses", "HTTPS")
+Rel(reader, web_app, "Uses", "HTTPS")
+Rel(reader, mobile_app, "Uses", "HTTPS")
+Rel(anonymous, web_app, "Registers via", "HTTPS")
+
+' Client to API Gateway
+Rel(web_app, api_gateway, "Makes API calls to", "JSON/HTTPS, REST")
+Rel(mobile_app, api_gateway, "Makes API calls to", "JSON/HTTPS, REST")
+
+' API Gateway to Authentication
+Rel(api_gateway, auth_service, "Validates requests with", "JWT Token")
+
+' API Gateway to Business Logic
+Rel(api_gateway, business_logic, "Invokes operations on", "Method Calls")
+
+' Business Logic to Data Access
+Rel(business_logic, data_access, "Reads from and writes to", "JPA Entities")
+
+' Data Access to Database
+Rel(data_access, app_database, "Reads from and writes to", "JDBC, SQL")
+
+' Business Logic to File Storage
+Rel(business_logic, file_storage, "Stores and retrieves photos from", "File I/O")
+
+' Authentication to Database
+Rel(auth_service, data_access, "Retrieves user credentials from", "Method Calls")
+
+' Business Logic to External API
+Rel(business_logic, external_api, "Fetches historical events from", "HTTPS, JSON")
+
+' Future integration
+Rel_Back(business_logic, email_system, "Will send notifications via", "SMTP")
+
+note right of api_gateway
+  <b>API Gateway Responsibilities:</b>
+  • REST endpoint exposure
+  • Request routing
+  • Response formatting
+  • API documentation (Swagger)
+  • Input validation
+  • CORS handling
+
+  <b>Key Endpoints:</b>
+  • /api/authors
+  • /api/books
+  • /api/readers
+  • /api/lendings
+  • /api/genres
+  • /api/public/login
+end note
+
+note right of auth_service
+  <b>Security Features:</b>
+  • JWT token generation
+  • RSA key-based signing
+  • Token validation
+  • Role extraction
+  • Password hashing (BCrypt)
+  • RBAC enforcement
+
+  <b>Roles:</b>
+  • ADMIN - Full access
+  • LIBRARIAN - Management
+  • READER - Borrowing
+end note
+
+note right of business_logic
+  <b>Domain Modules:</b>
+  • Author Management
+  • Book Management
+  • Reader Management
+  • Lending Management
+  • Genre Management
+  • User Management
+
+  <b>Business Rules:</b>
+  • Lending duration: 15 days
+  • Fine: 200 cents/day
+  • Min reader age: 12
+  • Book must have authors
+  • GDPR consent required
+end note
+
+note bottom of app_database
+  <b>Database Schema:</b>
+  • BOOK (pk, isbn, title, genre, description, photo)
+  • AUTHOR (pk, authorNumber, name, bio, photo)
+  • LENDING (pk, lendingNumber, book, reader, dates, fine)
+  • READER_DETAILS (pk, readerNumber, birthDate, phone, photo)
+  • GENRE (pk, genre)
+  • USER (pk, username, password, roles)
+  • Join tables for many-to-many relationships
+
+  <b>Constraints:</b>
+  • Unique: ISBN, lending number, reader number
+  • Foreign keys: Book→Genre, Lending→Book/Reader
+  • Optimistic locking: @Version on entities
+end note
+
+note left of file_storage
+  <b>Stored Files:</b>
+  • Author photos (≤20KB)
+  • Book cover images (≤20KB)
+  • Reader photos (≤20KB)
+
+  <b>Directory Structure:</b>
+  uploads-psoft-g1/
+  ├── authors/
+  ├── books/
+  └── readers/
+end note
+
+SHOW_LEGEND()
+
+@enduml
