@@ -2,7 +2,7 @@
 Architecture Background
 =======================
 
-This document describes the background and rationale for the software architecture of the **Book Management System (BMS)**. It explains constraints and influences that shaped the current design and enumerates the major architectural approaches adopted to meet the system’s functional and quality goals. It also highlights design alternatives and variation points considered during architectural design.
+This document describes the background and rationale for the software architecture of the **Library Management System**. It explains constraints and influences that shaped the current design and enumerates the major architectural approaches adopted to meet the system’s functional and quality goals. It also highlights design alternatives and variation points considered during architectural design.
 
 Problem Background
 ------------------
@@ -12,7 +12,7 @@ The system builds upon a previously developed REST-oriented backend that offers 
 System Overview
 ---------------
 
-The **Book Management System (BMS)** is a web-based platform that:
+The **Library Management System (BMS)** is a web-based platform that:
 
 - Manages **catalog data** (books, authors, genres), **reader accounts**, and **lending workflows**.
 - Supports **configurable persistence** across **SQL + Redis**, **MongoDB + Redis**, and **Elasticsearch** profiles.
