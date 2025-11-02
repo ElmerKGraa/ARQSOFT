@@ -1,0 +1,125 @@
+@startuml Scenario - Create Book with Photo
+
+skinparam backgroundColor #FEFEFE
+skinparam sequenceMessageAlign center
+
+title Scenario: Create Book with Photo Upload (Sequence Diagram)
+
+actor "Librarian" as Librarian
+participant "<<system>>\nLibrary System\nUI" as UI
+participant "<<component>>\nBook\nController" as Controller
+participant "<<component>>\nBook\nService" as Service
+participant "<<component>>\nBook\nRepository" as BookRepo
+participant "<<component>>\nAuthor\nRepository" as AuthorRepo
+participant "<<component>>\nFile Storage\nService" as FileStorage
+database "<<database>>\nH2 Database" as DB
+participant "<<filesystem>>\nFile System" as FS
+
+' Lollipop interfaces
+interface "REST API" as IREST
+interface "Service API" as ISvc
+interface "Repository API" as IRepo
+interface "Storage API" as IStorage
+interface "JDBC API" as IJDBC
+interface "File I/O API" as IFileIO
+
+Controller - IREST
+Service - ISvc
+BookRepo - IRepo
+FileStorage - IStorage
+DB - IJDBC
+FS - IFileIO
+
+Librarian -> UI : 1: create book with photo
+activate UI
+
+UI -> IREST : 1.1: POST /api/books\n(multipart: book data + photo)
+activate IREST
+IREST -> Controller : 1.1.1: createBook(dto, photo)
+activate Controller
+
+Controller -> ISvc : 1.2: create(bookDTO, photoFile)
+activate ISvc
+ISvc -> Service : 1.2.1: validate & process
+activate Service
+
+Service -> Service : 1.3: validate ISBN\nvalidate required fields
+
+Service -> AuthorRepo : 1.4: findByAuthorNumber(authorNumbers)
+activate AuthorRepo
+AuthorRepo -> DB : 1.4.1: SELECT * FROM author WHERE...
+activate DB
+DB --> AuthorRepo : 1.4.2: author data
+deactivate DB
+AuthorRepo --> Service : 1.4.3: List<Author>
+deactivate AuthorRepo
+
+alt photo is provided
+    Service -> IStorage : 1.5: storeFile(photoFile)
+    activate IStorage
+    IStorage -> FileStorage : 1.5.1: save file
+    activate FileStorage
+    FileStorage -> IFileIO : 1.5.2: write to disk
+    activate IFileIO
+    IFileIO -> FS : 1.5.3: save file
+    activate FS
+    FS --> IFileIO : 1.5.4: file saved
+    deactivate FS
+    IFileIO --> FileStorage : 1.5.5: file path
+    deactivate IFileIO
+    FileStorage --> IStorage : 1.5.6: Photo object
+    deactivate FileStorage
+    IStorage --> Service : 1.5.7: photo stored
+    deactivate IStorage
+end
+
+Service -> Service : 1.6: create Book entity\nwith authors and photo
+
+Service -> IRepo : 1.7: save(book)
+activate IRepo
+IRepo -> BookRepo : 1.7.1: persist
+activate BookRepo
+BookRepo -> IJDBC : 1.7.2: INSERT INTO book
+activate IJDBC
+IJDBC -> DB : 1.7.3: execute insert
+activate DB
+DB --> IJDBC : 1.7.4: book saved
+deactivate DB
+IJDBC --> BookRepo : 1.7.5: success
+deactivate IJDBC
+BookRepo --> IRepo : 1.7.6: Book entity
+deactivate BookRepo
+IRepo --> Service : 1.7.7: saved book
+deactivate IRepo
+
+Service --> ISvc : 1.8: BookDTO
+deactivate Service
+ISvc --> Controller : 1.8.1: result
+deactivate ISvc
+
+Controller --> IREST : 1.9: HTTP 201 Created
+deactivate Controller
+IREST --> UI : 1.9.1: book created
+deactivate IREST
+
+UI --> Librarian : 1.10: display confirmation
+deactivate UI
+
+note right of Service
+  <b>Business Rules:</b>
+  - Validate unique ISBN
+  - Verify authors exist
+  - Store photo if provided
+  - Associate book with genre
+  - Set initial version
+end note
+
+note right of FileStorage
+  <b>File Operations:</b>
+  - Generate unique filename
+  - Store in uploads directory
+  - Create Photo entity
+  - Handle file I/O errors
+end note
+
+@enduml

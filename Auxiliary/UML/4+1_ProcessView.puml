@@ -1,0 +1,116 @@
+@startuml Process View - 4+1 Architecture
+
+skinparam componentStyle rectangle
+skinparam backgroundColor #FEFEFE
+
+title Library Management System - Process View (4+1)
+
+node "Application Container" {
+
+    component "<<container>>\nWeb UI\nContainer" as WebUI {
+        component "Author UI\nProcess" as AuthorUIProc
+        component "Book UI\nProcess" as BookUIProc
+        component "Reader UI\nProcess" as ReaderUIProc
+        component "Lending UI\nProcess" as LendingUIProc
+    }
+
+    component "<<container>>\nApplication\nServices" as AppServices {
+        component "Author Service\nProcess" as AuthorSvcProc
+        component "Book Service\nProcess" as BookSvcProc
+        component "Reader Service\nProcess" as ReaderSvcProc
+        component "Lending Service\nProcess" as LendingSvcProc
+        component "Genre Service\nProcess" as GenreSvcProc
+    }
+
+    component "<<container>>\nDomain\nProcessing" as DomainProc {
+        component "Domain Logic\nProcessor" as DomainProcessor
+        component "Validation\nProcessor" as ValidationProc
+        component "Business Rules\nEngine" as BizRulesProc
+    }
+
+    component "<<container>>\nData Access\nLayer" as DataAccess {
+        component "Repository\nManager" as RepoManager
+        component "Transaction\nManager" as TxManager
+        component "Cache\nManager" as CacheManager
+    }
+
+    component "<<container>>\nInfrastructure\nServices" as Infrastructure {
+        component "File Storage\nProcess" as FileProc
+        component "External API\nClient" as APIClient
+        component "Security\nProcessor" as SecurityProc
+    }
+}
+
+' Lollipop interfaces between processes
+interface "HTTP API" as IHTTP
+interface "Service API" as ISvcAPI
+interface "Domain API" as IDomainAPI
+interface "Persistence API" as IPersistAPI
+interface "Storage API" as IStorageAPI
+interface "External API" as IExternalAPI
+interface "Auth API" as IAuthAPI
+
+' UI to Services
+AppServices - IHTTP
+WebUI ..> IHTTP
+
+' Services to Domain
+DomainProc - IDomainAPI
+AppServices ..> IDomainAPI
+
+' Services to Data Access
+DataAccess - IPersistAPI
+AppServices ..> IPersistAPI
+
+' Infrastructure interfaces
+Infrastructure - ISvcAPI
+FileProc - IStorageAPI
+APIClient - IExternalAPI
+SecurityProc - IAuthAPI
+
+AppServices ..> IStorageAPI
+AppServices ..> IExternalAPI
+WebUI ..> IAuthAPI
+
+database "Database\nProcess" as DB {
+    storage "Connection Pool"
+}
+
+cloud "External\nServices" as External {
+    component "API Ninjas"
+}
+
+' Data Access to Database
+DataAccess --> DB : <<JDBC>>
+APIClient --> External : <<REST>>
+
+note right of WebUI
+  <b>Concurrent Threads</b>
+  - HTTP Request Handlers
+  - Session Management
+  - Response Rendering
+end note
+
+note right of AppServices
+  <b>Service Threads</b>
+  - Business Logic Execution
+  - Transaction Coordination
+  - Service Orchestration
+end note
+
+note right of DataAccess
+  <b>Data Threads</b>
+  - Connection Pooling
+  - Query Execution
+  - Transaction Management
+  - Cache Operations
+end note
+
+note right of Infrastructure
+  <b>Infrastructure Threads</b>
+  - File I/O Operations
+  - External API Calls
+  - Security Token Processing
+end note
+
+@enduml

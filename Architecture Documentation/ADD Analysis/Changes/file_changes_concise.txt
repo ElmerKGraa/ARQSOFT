@@ -1,0 +1,175 @@
+==============================================================================
+CONCISE FILE-BY-FILE CHANGES: OLD vs NEW
+==============================================================================
+
+==============================================================================
+NEW FILES CREATED
+==============================================================================
+
+INFRASTRUCTURE (7 files):
+1. Dockerfile - Multi-stage containerization setup
+2. docker-compose.yml - Full stack with Redis, MongoDB, Elasticsearch
+3. .dockerignore - Docker build optimization
+4. dockerInstructions/ - Documentation
+5. test-api.sh - API testing automation
+6. postman-collection.json - API testing collection
+7. postman-environment.json - API testing environment
+
+CONFIGURATION (5 files):
+8. IdGeneratorConfig.java - ID generation strategy configuration
+9. IdGeneratorInitializer.java - Initialize ID generators
+10. IsbnLookupConfig.java - External ISBN API configuration
+11. PersistenceConfig.java - Multi-database configuration
+12. RedisConfig.java - Redis cache configuration
+
+ID GENERATION SERVICES (6 files):
+13. IdGenerator.java - Interface for ID generation strategies
+14. ConfigurableIdGenerator.java - New format (BASE65-TIMESTAMP-HEX)
+15. LegacyIdGenerator.java - Old format (YYYY/sequential)
+16. IdGeneratorFactory.java - Factory for ID generators
+17. IdGeneratorProperties.java - Configuration binding
+18. PersistenceProperties.java - Persistence configuration binding
+
+ISBN LOOKUP SERVICES (9 files):
+19. IsbnLookupService.java - Interface for ISBN lookup
+20. AbstractIsbnLookupService.java - Base implementation
+21. GoogleBooksLookupService.java - Google Books API integration
+22. OpenLibraryLookupService.java - Open Library API integration
+23. IsbnDbLookupService.java - ISBNdb API integration
+24. CompositeIsbnLookupService.java - Fallback mechanism
+25. IsbnLookupFactory.java - Factory for lookup services
+26. IsbnLookupException.java - Exception handling
+27. IsbnLookupProperties.java - Configuration binding
+
+REPOSITORY IMPLEMENTATIONS (2 files):
+28. CachedBookRepository.java - Redis caching decorator
+29. MongoBookRepository.java - MongoDB persistence alternative
+
+CACHE SERVICES (2 files):
+30. CacheService.java - Cache abstraction interface
+31. RedisCacheService.java - Redis implementation
+
+TESTING (New test directories with ~30 test files):
+32. src/test/java/pt/psoft/g1/psoftg1/bookmanagement/api/ - Book API tests
+33. src/test/java/pt/psoft/g1/psoftg1/lendingmanagement/api/ - Lending API tests
+34. src/test/java/pt/psoft/g1/psoftg1/e2e/ - E2E and performance tests
+35. src/test/java/pt/psoft/g1/psoftg1/shared/services/ - Service tests
+
+OTHER:
+36. application_configuration.properties - External config support
+37. notes.md - Development notes
+38. .vscode/ - VS Code settings
+
+==============================================================================
+MODIFIED FILES
+==============================================================================
+
+BUILD & DEPLOYMENT:
+1. pom.xml
+   WHAT: Added dependencies (Redis, MongoDB, Jackson, AssertJ, WebClient)
+   WHAT: Added PIT mutation testing plugin
+   WHY: Support new features (caching, NoSQL, testing)
+
+2. application.properties
+   WHAT: Added 100+ lines of configuration
+   WHAT: ID generation settings (legacy vs configurable)
+   WHAT: ISBN lookup settings (API keys, providers, timeouts)
+   WHAT: Redis settings (host, port, TTL values)
+   WHAT: MongoDB settings (connection, database)
+   WHAT: Elasticsearch settings (stub)
+   WHY: Enable runtime configurability without code changes
+
+APPLICATION CORE:
+3. PsoftG1Application.java
+   WHAT: Added @EnableConfigurationProperties annotation
+   WHAT: Enables PersistenceProperties, IsbnLookupProperties, IdGeneratorProperties
+   WHY: Initialize configuration-driven architecture
+
+REPOSITORIES:
+4. BookRepository.java (interface)
+   WHAT: Added methods: deleteByIsbn(), findAll(), count()
+   WHY: Support new cache and MongoDB implementations
+
+5. SpringDataBookRepository.java
+   WHAT: Implementation of new repository methods
+   WHY: Fulfill interface contract
+
+SERVICES:
+6. BookServiceImpl.java
+   WHAT: Updated to work with repository abstraction layer
+   WHY: Support multiple repository implementations
+
+MODEL CLASSES:
+7. LendingNumber.java
+   WHAT: Column size 32→64 chars
+   WHAT: Static IdGenerator injection
+   WHAT: Uses strategy pattern instead of hardcoded logic
+   WHAT: Supports both legacy and configurable formats
+   WHY: Enable pluggable ID generation strategies
+
+8. ReaderNumber.java
+   WHAT: Similar refactoring to LendingNumber
+   WHY: Consistent ID generation across entities
+
+9. Lending.java
+   WHAT: Updated to work with new ID generation
+   WHY: Integration with IdGenerator strategy
+
+BOOTSTRAPPING:
+10. Bootstrapper.java
+    WHAT: Updated initialization logic
+    WHY: Support new architecture
+
+11. UserBootstrapper.java
+    WHAT: Updated initialization logic
+    WHY: Support new architecture
+
+==============================================================================
+DELETED FILES
+==============================================================================
+
+1. .idea/modules.xml - IDE configuration (not significant)
+2. .jpb/jpb-settings.xml - JPA Buddy settings (not significant)
+
+==============================================================================
+CHANGE SUMMARY BY CATEGORY
+==============================================================================
+
+INFRASTRUCTURE: 7 new files (Docker, testing, API docs)
+CONFIGURATION: 5 new files (multi-strategy setup)
+ID GENERATION: 6 new files (Strategy Pattern implementation)
+ISBN LOOKUP: 9 new files (External API integration)
+PERSISTENCE: 4 new files (Cache + MongoDB alternatives)
+TESTING: 4 new directories with ~30 test files
+MODIFIED: 11 existing files (integration of new features)
+
+TOTAL NEW FILES: ~38+ (excluding individual test files)
+TOTAL MODIFIED FILES: 11
+TOTAL DELETED FILES: 2 (insignificant)
+
+==============================================================================
+WHY THESE CHANGES?
+==============================================================================
+
+PRIMARY GOAL: Transform monolithic application into configurable, 
+multi-backend architecture using architectural patterns
+
+KEY IMPROVEMENTS:
+1. Configurable ID generation (Strategy Pattern)
+2. Multiple persistence backends (SQL+Redis, MongoDB+Redis)
+3. External API integration (ISBN lookup services)
+4. Caching layer for performance (Redis)
+5. Containerization support (Docker)
+6. Comprehensive testing (mutation testing)
+7. Runtime configurability (no code changes needed)
+
+ARCHITECTURAL QUALITY ATTRIBUTES ACHIEVED:
+- Performance (caching)
+- Scalability (NoSQL support)
+- Configurability (strategy selection)
+- Extensibility (easy to add new implementations)
+- Resilience (fallback mechanisms)
+- Maintainability (separation of concerns)
+- Interoperability (external APIs)
+
+==============================================================================

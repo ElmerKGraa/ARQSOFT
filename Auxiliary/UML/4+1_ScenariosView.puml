@@ -1,0 +1,175 @@
+@startuml Scenarios View - 4+1 Architecture (Use Cases)
+
+skinparam backgroundColor #FEFEFE
+skinparam actorStyle awesome
+
+title Library Management System - Scenarios/Use Case View (4+1)
+
+left to right direction
+
+actor "Librarian" as Librarian
+actor "Reader" as Reader
+actor "System Administrator" as Admin
+
+rectangle "Library Management System" {
+
+    package "Author Management" {
+        usecase "Create Author" as UC1
+        usecase "Update Author" as UC2
+        usecase "Search Authors" as UC3
+        usecase "View Author Details" as UC4
+        usecase "Get Top 5 Authors" as UC5
+        usecase "View Co-Authors" as UC6
+    }
+
+    package "Book Management" {
+        usecase "Create Book" as UC7
+        usecase "Update Book" as UC8
+        usecase "Search Books" as UC9
+        usecase "View Book Details" as UC10
+        usecase "Get Top 5 Books" as UC11
+        usecase "Get Book Suggestions" as UC12
+    }
+
+    package "Reader Management" {
+        usecase "Register Reader" as UC13
+        usecase "Update Reader Profile" as UC14
+        usecase "Search Readers" as UC15
+        usecase "View Reader Details" as UC16
+        usecase "Get Top 5 Readers" as UC17
+        usecase "View Reader Lendings" as UC18
+    }
+
+    package "Lending Management" {
+        usecase "Create Lending" as UC19
+        usecase "Return Book" as UC20
+        usecase "View Lending Details" as UC21
+        usecase "View Overdue Lendings" as UC22
+        usecase "Calculate Fine" as UC23
+        usecase "Get Average Duration" as UC24
+    }
+
+    package "Genre Management" {
+        usecase "View Top 5 Genres" as UC25
+        usecase "Get Average Lendings" as UC26
+        usecase "View Lendings Per Month" as UC27
+    }
+
+    package "Authentication" {
+        usecase "Login" as UC28
+        usecase "Logout" as UC29
+        usecase "Manage Permissions" as UC30
+    }
+
+    package "File Management" {
+        usecase "Upload Photo" as UC31
+        usecase "Delete Photo" as UC32
+    }
+}
+
+' External Systems
+actor "External API\n(API Ninjas)" as ExternalAPI
+
+' Librarian use cases
+Librarian --> UC1
+Librarian --> UC2
+Librarian --> UC3
+Librarian --> UC4
+Librarian --> UC5
+Librarian --> UC6
+
+Librarian --> UC7
+Librarian --> UC8
+Librarian --> UC9
+Librarian --> UC10
+Librarian --> UC11
+Librarian --> UC12
+
+Librarian --> UC13
+Librarian --> UC14
+Librarian --> UC15
+Librarian --> UC16
+Librarian --> UC17
+Librarian --> UC18
+
+Librarian --> UC19
+Librarian --> UC20
+Librarian --> UC21
+Librarian --> UC22
+Librarian --> UC23
+Librarian --> UC24
+
+Librarian --> UC25
+Librarian --> UC26
+Librarian --> UC27
+
+Librarian --> UC31
+Librarian --> UC32
+
+' Reader use cases
+Reader --> UC3
+Reader --> UC4
+Reader --> UC9
+Reader --> UC10
+Reader --> UC12
+Reader --> UC14
+Reader --> UC18
+Reader --> UC25
+
+' Admin use cases
+Admin --> UC28
+Admin --> UC29
+Admin --> UC30
+
+' System interactions
+UC14 ..> ExternalAPI : <<uses>>\nGet Historical Events
+UC13 ..> ExternalAPI : <<uses>>\nGet Historical Events
+
+' Include relationships
+UC1 ..> UC31 : <<include>>
+UC2 ..> UC31 : <<include>>
+UC7 ..> UC31 : <<include>>
+UC8 ..> UC31 : <<include>>
+UC13 ..> UC31 : <<include>>
+UC14 ..> UC31 : <<include>>
+
+UC19 ..> UC10 : <<include>>
+UC19 ..> UC16 : <<include>>
+UC20 ..> UC23 : <<include>>
+
+' Extend relationships
+UC22 ..> UC23 : <<extend>>
+UC18 ..> UC22 : <<extend>>
+
+note right of UC1
+  <b>Key Scenarios:</b>
+  1. Author registration with photo
+  2. Validation of forbidden names
+  3. Biography management
+end note
+
+note right of UC7
+  <b>Key Scenarios:</b>
+  1. Book creation with multiple authors
+  2. ISBN validation
+  3. Genre assignment
+  4. Cover photo upload
+end note
+
+note right of UC19
+  <b>Key Scenarios:</b>
+  1. Create lending for reader
+  2. Check book availability
+  3. Set lending period
+  4. Calculate limit date
+end note
+
+note right of UC20
+  <b>Key Scenarios:</b>
+  1. Mark book as returned
+  2. Calculate days delayed
+  3. Calculate fine if overdue
+  4. Update reader history
+end note
+
+@enduml

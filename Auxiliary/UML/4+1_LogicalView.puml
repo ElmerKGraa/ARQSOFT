@@ -1,0 +1,141 @@
+@startuml Logical View - 4+1 Architecture
+
+skinparam packageStyle rectangle
+skinparam backgroundColor #FEFEFE
+skinparam componentStyle rectangle
+
+title Library Management System - Logical View (4+1)
+
+package "Sistema AIT" <<component>> {
+
+    package "UI Layer" <<component>> {
+        component "Author\nManagement UI" as AuthorUI
+        component "Book\nManagement UI" as BookUI
+        component "Reader\nManagement UI" as ReaderUI
+        component "Lending\nManagement UI" as LendingUI
+        component "Genre\nManagement UI" as GenreUI
+    }
+
+    package "Application Services" <<component>> {
+        component "Author\nService" as AuthorSvc
+        component "Book\nService" as BookSvc
+        component "Reader\nService" as ReaderSvc
+        component "Lending\nService" as LendingSvc
+        component "Genre\nService" as GenreSvc
+    }
+
+    package "Domain Model" <<component>> {
+        component "Author" as AuthorDomain
+        component "Book" as BookDomain
+        component "Reader" as ReaderDomain
+        component "Lending" as LendingDomain
+        component "Genre" as GenreDomain
+    }
+
+    package "Data Access" <<component>> {
+        component "Author\nRepository" as AuthorRepo
+        component "Book\nRepository" as BookRepo
+        component "Reader\nRepository" as ReaderRepo
+        component "Lending\nRepository" as LendingRepo
+        component "Genre\nRepository" as GenreRepo
+    }
+
+    package "Infrastructure" <<component>> {
+        component "File Storage\nService" as FileStorage
+        component "External API\nService" as ExternalAPI
+        component "Security\nService" as Security
+    }
+}
+
+' Lollipop interfaces - UI to Services
+interface "Author API" as IAuthorAPI
+interface "Book API" as IBookAPI
+interface "Reader API" as IReaderAPI
+interface "Lending API" as ILendingAPI
+interface "Genre API" as IGenreAPI
+
+AuthorSvc - IAuthorAPI
+BookSvc - IBookAPI
+ReaderSvc - IReaderAPI
+LendingSvc - ILendingAPI
+GenreSvc - IGenreAPI
+
+AuthorUI ..> IAuthorAPI
+BookUI ..> IBookAPI
+ReaderUI ..> IReaderAPI
+LendingUI ..> ILendingAPI
+GenreUI ..> IGenreAPI
+
+' Lollipop interfaces - Services to Domain
+interface "Author Model API" as IAuthorModel
+interface "Book Model API" as IBookModel
+interface "Reader Model API" as IReaderModel
+interface "Lending Model API" as ILendingModel
+interface "Genre Model API" as IGenreModel
+
+AuthorDomain - IAuthorModel
+BookDomain - IBookModel
+ReaderDomain - IReaderModel
+LendingDomain - ILendingModel
+GenreDomain - IGenreModel
+
+AuthorSvc ..> IAuthorModel
+BookSvc ..> IBookModel
+ReaderSvc ..> IReaderModel
+LendingSvc ..> ILendingModel
+GenreSvc ..> IGenreModel
+
+' Lollipop interfaces - Services to Repositories
+interface "Author Repo API" as IAuthorRepo
+interface "Book Repo API" as IBookRepo
+interface "Reader Repo API" as IReaderRepo
+interface "Lending Repo API" as ILendingRepo
+interface "Genre Repo API" as IGenreRepo
+
+AuthorRepo - IAuthorRepo
+BookRepo - IBookRepo
+ReaderRepo - IReaderRepo
+LendingRepo - ILendingRepo
+GenreRepo - IGenreRepo
+
+AuthorSvc ..> IAuthorRepo
+BookSvc ..> IBookRepo
+ReaderSvc ..> IReaderRepo
+LendingSvc ..> ILendingRepo
+GenreSvc ..> IGenreRepo
+
+' Lollipop interfaces - Infrastructure services
+interface "Storage API" as IStorage
+interface "External API" as IExternal
+interface "Security API" as ISecurity
+
+FileStorage - IStorage
+ExternalAPI - IExternal
+Security - ISecurity
+
+AuthorSvc ..> IStorage
+BookSvc ..> IStorage
+ReaderSvc ..> IStorage
+ReaderSvc ..> IExternal
+
+' Domain relationships
+BookDomain ..> GenreDomain : uses
+BookDomain ..> AuthorDomain : uses
+LendingDomain ..> BookDomain : uses
+LendingDomain ..> ReaderDomain : uses
+ReaderDomain ..> GenreDomain : interested in
+
+note top of "UI Layer"
+  <b>Presentation Layer</b>
+  Controllers and Views
+  REST endpoints
+  DTO mapping
+end note
+
+note bottom of "Data Access"
+  <b>Persistence Layer</b>
+  JPA Repositories
+  Database operations
+end note
+
+@enduml

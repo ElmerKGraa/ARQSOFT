@@ -1,0 +1,121 @@
+@startuml Scenario - Return Book
+
+skinparam backgroundColor #FEFEFE
+skinparam sequenceMessageAlign center
+
+title Scenario: Return Book with Fine Calculation (Sequence Diagram)
+
+actor "Librarian" as Librarian
+participant "<<system>>\nLibrary System\nUI" as UI
+participant "<<component>>\nLending\nController" as Controller
+participant "<<component>>\nLending\nService" as Service
+participant "<<component>>\nLending\nRepository" as Repository
+participant "<<component>>\nLending\nEntity" as Lending
+database "<<database>>\nH2 Database" as DB
+
+' Lollipop interfaces
+interface "REST API" as IREST
+interface "Service API" as ISvc
+interface "Repository API" as IRepo
+interface "Domain API" as IDomain
+interface "JDBC API" as IJDBC
+
+Controller - IREST
+Service - ISvc
+Repository - IRepo
+Lending - IDomain
+DB - IJDBC
+
+Librarian -> UI : 1: return book
+activate UI
+
+UI -> IREST : 1.1: PUT /api/lendings/{id}/return
+activate IREST
+IREST -> Controller : 1.1.1: setReturned(id, dto)
+activate Controller
+
+Controller -> ISvc : 1.2: setReturned(lendingNumber, commentary)
+activate ISvc
+ISvc -> Service : 1.2.1: process return
+activate Service
+
+Service -> IRepo : 1.3: findByNumber(lendingNumber)
+activate IRepo
+IRepo -> Repository : 1.3.1: query
+activate Repository
+Repository -> IJDBC : 1.3.2: SELECT * FROM lending
+activate IJDBC
+IJDBC -> DB : 1.3.3: execute query
+activate DB
+DB --> IJDBC : 1.3.4: lending data
+deactivate DB
+IJDBC --> Repository : 1.3.5: result
+deactivate IJDBC
+Repository --> IRepo : 1.3.6: Lending entity
+deactivate Repository
+IRepo --> Service : 1.3.7: lending found
+deactivate IRepo
+
+Service -> IDomain : 1.4: setReturned(returnDate, commentary)
+activate IDomain
+IDomain -> Lending : 1.4.1: calculate fine
+activate Lending
+
+Lending -> Lending : 1.4.2: getDaysDelayed()
+Lending -> Lending : 1.4.3: getFineValueInCents()
+
+alt lending is overdue
+    Lending --> Lending : 1.4.4: fine > 0
+    note right
+      <b>Fine Calculation:</b>
+      daysDelayed = returnDate - limitDate
+      fine = daysDelayed * finePerDay
+    end note
+else on time
+    Lending --> Lending : 1.4.5: fine = 0
+end
+
+Lending -> Lending : 1.4.6: set returnedDate\nset commentary
+deactivate Lending
+IDomain --> Service : 1.4.7: lending updated
+deactivate IDomain
+
+Service -> IRepo : 1.5: save(lending)
+activate IRepo
+IRepo -> Repository : 1.5.1: persist
+activate Repository
+Repository -> IJDBC : 1.5.2: UPDATE lending
+activate IJDBC
+IJDBC -> DB : 1.5.3: execute update
+activate DB
+DB --> IJDBC : 1.5.4: success
+deactivate DB
+IJDBC --> Repository : 1.5.5: updated
+deactivate IJDBC
+Repository --> IRepo : 1.5.6: Lending entity
+deactivate Repository
+IRepo --> Service : 1.5.7: saved
+deactivate IRepo
+
+Service --> ISvc : 1.6: LendingDTO with fine
+deactivate Service
+ISvc --> Controller : 1.6.1: result
+deactivate ISvc
+
+Controller --> IREST : 1.7: HTTP 200 OK
+deactivate Controller
+IREST --> UI : 1.7.1: return processed
+deactivate IREST
+
+UI --> Librarian : 1.8: display confirmation\nshow fine if applicable
+deactivate UI
+
+note right of Lending
+  <b>Domain Logic:</b>
+  - Calculate days delayed
+  - Apply fine rate
+  - Update lending state
+  - Preserve business invariants
+end note
+
+@enduml

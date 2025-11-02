@@ -1,0 +1,263 @@
+@startuml Development View - 4+1 Architecture
+
+skinparam packageStyle rectangle
+skinparam backgroundColor #FEFEFE
+skinparam componentStyle rectangle
+
+title Library Management System - Development View (4+1)
+
+package "Sistema AIT" {
+
+    package "Presentation Layer" <<layer>> #E3F2FD {
+
+        package "authormanagement.api" {
+            component "AuthorController" as AuthorCtrl
+            component "AuthorView" as AuthorView
+            component "AuthorViewMapper" as AuthorMapper
+        }
+
+        package "bookmanagement.api" {
+            component "BookController" as BookCtrl
+            component "BookView" as BookView
+            component "BookViewMapper" as BookMapper
+        }
+
+        package "readermanagement.api" {
+            component "ReaderController" as ReaderCtrl
+            component "ReaderView" as ReaderView
+            component "ReaderViewMapper" as ReaderMapper
+        }
+
+        package "lendingmanagement.api" {
+            component "LendingController" as LendingCtrl
+            component "LendingView" as LendingView
+            component "LendingViewMapper" as LendingMapper
+        }
+
+        package "genremanagement.api" {
+            component "GenreController" as GenreCtrl
+            component "GenreView" as GenreView
+            component "GenreViewMapper" as GenreMapper
+        }
+    }
+
+    package "Business Layer" <<layer>> #FFF3E0 {
+
+        package "authormanagement.services" {
+            component "AuthorService" as AuthorSvc
+            component "AuthorServiceImpl" as AuthorSvcImpl
+        }
+
+        package "bookmanagement.services" {
+            component "BookService" as BookSvc
+            component "BookServiceImpl" as BookSvcImpl
+        }
+
+        package "readermanagement.services" {
+            component "ReaderService" as ReaderSvc
+            component "ReaderServiceImpl" as ReaderSvcImpl
+        }
+
+        package "lendingmanagement.services" {
+            component "LendingService" as LendingSvc
+            component "LendingServiceImpl" as LendingSvcImpl
+        }
+
+        package "genremanagement.services" {
+            component "GenreService" as GenreSvc
+            component "GenreServiceImpl" as GenreSvcImpl
+        }
+    }
+
+    package "Persistence Layer" <<layer>> #E8F5E9 {
+
+        package "authormanagement.repositories" {
+            component "AuthorRepository" as AuthorRepo
+        }
+
+        package "bookmanagement.repositories" {
+            component "BookRepository" as BookRepo
+        }
+
+        package "readermanagement.repositories" {
+            component "ReaderRepository" as ReaderRepo
+        }
+
+        package "lendingmanagement.repositories" {
+            component "LendingRepository" as LendingRepo
+        }
+
+        package "genremanagement.repositories" {
+            component "GenreRepository" as GenreRepo
+        }
+
+        package "usermanagement.repositories" {
+            component "UserRepository" as UserRepo
+        }
+    }
+
+    package "Domain Layer" <<layer>> #F3E5F5 {
+
+        package "authormanagement.model" {
+            component "Author" as AuthorModel
+        }
+
+        package "bookmanagement.model" {
+            component "Book" as BookModel
+        }
+
+        package "readermanagement.model" {
+            component "ReaderDetails" as ReaderModel
+        }
+
+        package "lendingmanagement.model" {
+            component "Lending" as LendingModel
+            component "Fine" as FineModel
+        }
+
+        package "genremanagement.model" {
+            component "Genre" as GenreModel
+        }
+
+        package "usermanagement.model" {
+            component "User" as UserModel
+            component "Librarian" as LibrarianModel
+            component "Reader" as ReaderUserModel
+        }
+
+        package "shared.model" {
+            component "EntityWithPhoto" as EntityPhoto
+            component "Photo" as Photo
+            component "Name" as Name
+        }
+    }
+
+    package "Infrastructure Layer" <<layer>> #E0F2F1 {
+
+        package "shared.services" {
+            component "FileStorageService" as FileStorage
+            component "ForbiddenNameService" as ForbiddenName
+            component "ConcurrencyService" as Concurrency
+        }
+
+        package "external.service" {
+            component "ApiNinjasService" as ExternalAPI
+        }
+
+        package "configuration" {
+            component "SecurityConfig" as SecurityCfg
+        }
+
+        package "exceptions" {
+            component "GlobalExceptionHandler" as ExceptionHandler
+        }
+    }
+}
+
+' Lollipop interfaces - Controllers to Services
+interface "IAuthorService" as IAuthorSvc
+interface "IBookService" as IBookSvc
+interface "IReaderService" as IReaderSvc
+interface "ILendingService" as ILendingSvc
+interface "IGenreService" as IGenreSvc
+
+AuthorSvc - IAuthorSvc
+BookSvc - IBookSvc
+ReaderSvc - IReaderSvc
+LendingSvc - ILendingSvc
+GenreSvc - IGenreSvc
+
+AuthorCtrl ..> IAuthorSvc
+BookCtrl ..> IBookSvc
+ReaderCtrl ..> IReaderSvc
+LendingCtrl ..> ILendingSvc
+GenreCtrl ..> IGenreSvc
+
+' Lollipop interfaces - Services to Repositories
+interface "IAuthorRepository" as IAuthorRepo
+interface "IBookRepository" as IBookRepo
+interface "IReaderRepository" as IReaderRepo
+interface "ILendingRepository" as ILendingRepo
+interface "IGenreRepository" as IGenreRepo
+
+AuthorRepo - IAuthorRepo
+BookRepo - IBookRepo
+ReaderRepo - IReaderRepo
+LendingRepo - ILendingRepo
+GenreRepo - IGenreRepo
+
+AuthorSvcImpl ..> IAuthorRepo
+BookSvcImpl ..> IBookRepo
+ReaderSvcImpl ..> IReaderRepo
+LendingSvcImpl ..> ILendingRepo
+GenreSvcImpl ..> IGenreRepo
+
+' Lollipop interfaces - Infrastructure Services
+interface "IFileStorage" as IFileStorage
+interface "IForbiddenName" as IForbiddenName
+interface "IExternalAPI" as IExternalAPI
+
+FileStorage - IFileStorage
+ForbiddenName - IForbiddenName
+ExternalAPI - IExternalAPI
+
+AuthorSvcImpl ..> IFileStorage
+BookSvcImpl ..> IFileStorage
+ReaderSvcImpl ..> IFileStorage
+AuthorSvcImpl ..> IForbiddenName
+ReaderSvcImpl ..> IExternalAPI
+
+' Domain Model relationships
+BookModel ..> GenreModel
+BookModel ..> AuthorModel
+LendingModel ..> BookModel
+LendingModel ..> ReaderModel
+ReaderModel ..> ReaderUserModel
+AuthorModel --|> EntityPhoto
+BookModel --|> EntityPhoto
+ReaderModel --|> EntityPhoto
+
+database "H2 Database" as DB
+cloud "External APIs" as ExtCloud
+
+AuthorRepo --> DB
+BookRepo --> DB
+ReaderRepo --> DB
+LendingRepo --> DB
+GenreRepo --> DB
+UserRepo --> DB
+
+ExternalAPI --> ExtCloud
+
+note top of "Presentation Layer"
+  <b>Module Organization:</b>
+  - REST Controllers
+  - DTOs and View Models
+  - Request/Response Mappers
+  - API Documentation
+end note
+
+note top of "Business Layer"
+  <b>Module Organization:</b>
+  - Service Interfaces
+  - Service Implementations
+  - Business Logic
+  - Transaction Management
+end note
+
+note top of "Persistence Layer"
+  <b>Module Organization:</b>
+  - JPA Repositories
+  - Custom Queries
+  - Database Operations
+end note
+
+note top of "Domain Layer"
+  <b>Module Organization:</b>
+  - Domain Entities
+  - Value Objects
+  - Domain Logic
+  - Aggregate Roots
+end note
+
+@enduml

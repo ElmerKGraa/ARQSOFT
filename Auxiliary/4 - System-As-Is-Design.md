@@ -109,10 +109,10 @@ The system follows a **Layered Architecture** pattern with clear separation of c
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    Presentation Layer                    │
+│                    Presentation Layer                   │
 │         (REST Controllers + DTOs/Views/Mappers)         │
 ├─────────────────────────────────────────────────────────┤
-│                    Application Layer                     │
+│                    Application Layer                    │
 │              (Service Interfaces + Impl)                │
 ├─────────────────────────────────────────────────────────┤
 │                     Domain Layer                        │

@@ -1,0 +1,136 @@
+@startuml Physical View - 4+1 Architecture
+
+skinparam componentStyle rectangle
+skinparam backgroundColor #FEFEFE
+skinparam nodeStyle rectangle
+
+title Library Management System - Physical/Deployment View (4+1)
+
+node "Client Tier" as ClientNode {
+    node "<<device>>\nWeb Browser" as Browser {
+        component "<<component>>\nUI Application" as UIApp {
+            component "React/Angular\nComponents" as FrontendFramework
+        }
+    }
+}
+
+node "Application Tier" as AppNode {
+    node "<<execution environment>>\nApplication Server\n(Tomcat/Jetty)" as AppServer {
+
+        component "<<container>>\nSpring Boot\nApplication" as SpringApp {
+
+            component "<<component>>\nWeb Layer" as WebLayer {
+                component "REST Controllers" as Controllers
+            }
+
+            component "<<component>>\nBusiness Layer" as BizLayer {
+                component "Service Implementations" as Services
+            }
+
+            component "<<component>>\nPersistence Layer" as PersistLayer {
+                component "JPA Repositories" as Repositories
+            }
+
+            component "<<component>>\nDomain Model" as DomainModel {
+                component "Entities & VOs" as Entities
+            }
+
+            component "<<component>>\nInfrastructure" as Infrastructure {
+                component "File Storage" as FileStorage
+                component "Security" as Security
+            }
+        }
+    }
+}
+
+node "Data Tier" as DataNode {
+    node "<<database server>>\nDatabase Server" as DBServer {
+        database "<<database>>\nH2 Database\n(Development)" as H2DB {
+            storage "AUTHOR_TABLE"
+            storage "BOOK_TABLE"
+            storage "READER_TABLE"
+            storage "LENDING_TABLE"
+            storage "GENRE_TABLE"
+            storage "USER_TABLE"
+        }
+    }
+
+    node "<<file server>>\nFile System" as FileSystem {
+        folder "<<directory>>\nUploads" as Uploads {
+            folder "photos"
+            folder "documents"
+        }
+    }
+}
+
+cloud "External Services" as ExternalCloud {
+    node "<<external system>>\nAPI Ninjas" as APINinjas {
+        component "Historical Events API" as HistoricalAPI
+    }
+}
+
+' Lollipop interfaces for communication protocols
+interface "HTTP/HTTPS\nREST API" as IHTTP
+interface "JDBC\nConnection Pool" as IJDBC
+interface "File I/O\nAPI" as IFileIO
+interface "HTTPS\nREST Client" as IExternal
+
+' Client to App Server
+AppServer - IHTTP
+Browser ..> IHTTP : "Port 8080"
+
+' App Server to Database
+DBServer - IJDBC
+PersistLayer ..> IJDBC : "Port 5432"
+
+' App Server to File System
+FileSystem - IFileIO
+Infrastructure ..> IFileIO
+
+' App Server to External Services
+APINinjas - IExternal
+Infrastructure ..> IExternal : "Port 443"
+
+note right of Browser
+  <b>Client Device</b>
+  - Modern Web Browser
+  - JavaScript Engine
+  - Local Storage
+  - Session Management
+end note
+
+note right of AppServer
+  <b>Application Server</b>
+  - Java 17+ Runtime
+  - Spring Boot 3.x
+  - Embedded Tomcat
+  - Port: 8080
+  - Memory: 512MB-2GB
+end note
+
+note right of DBServer
+  <b>Database Server</b>
+  - H2 Database Engine
+  - In-Memory Mode (Dev)
+  - File-Based Mode (Prod)
+  - Port: 5432 (PostgreSQL)
+  - Connection Pool: HikariCP
+end note
+
+note right of FileSystem
+  <b>File System</b>
+  - Local Storage
+  - Photo Uploads
+  - Document Storage
+  - Backup Location
+end note
+
+note right of ExternalCloud
+  <b>External Dependencies</b>
+  - REST API Calls
+  - Third-party Services
+  - Rate Limited
+  - HTTPS Only
+end note
+
+@enduml
